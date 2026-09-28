@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SolarO: plataforma para consultar el consumo energético del hogar, gestionar electrodomésticos y explorar alternativas de energía solar.">
+  <meta name="keywords" content="SolarO, energía solar, consumo energético, ahorro energético, electrodomésticos">
+  <meta name="author" content="SolarO">
+  <meta name="theme-color" content="#0b43bd">
+  <meta property="og:title" content="SolarO - Gestión de energía del hogar">
+  <meta property="og:description" content="Consulta tu consumo energético y descubre cómo ahorrar energía.">
+  <meta property="og:type" content="website">
+  <title>SolarO | Gestión de energía del hogar</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Navegación principal">
+      <a class="brand" href="#" aria-label="SolarO - Inicio">
+        <span class="brand-sun" aria-hidden="true">
+          <span class="sun-ray r1"></span><span class="sun-ray r2"></span>
+          <span class="sun-ray r3"></span><span class="sun-ray r4"></span>
+          <span class="sun-ray r5"></span><span class="sun-ray r6"></span>
+          <span class="panel-mini"></span>
+        </span>
+        <span class="brand-text">Solar<span>O</span></span>
+      </a>
+
+      <nav class="main-nav">
+        <a class="nav-link active" href="#">
+          <span class="nav-icon">⌂</span><span>Inicio</span>
+        </a>
+        <a class="nav-link" href="#">
+          <span class="nav-icon">◇</span><span>Aprende</span>
+        </a>
+        <a class="nav-link" href="#">
+          <span class="nav-icon">▣</span><span>Simulador</span>
+        </a>
+        <a class="nav-link" href="#">
+          <span class="nav-icon bubble">◯</span><span>Enviar comentarios</span>
+        </a>
+      </nav>
+
+      <div class="nav-divider"></div>
+
+      <nav class="secondary-nav">
+        <a class="nav-link" href="#"><span class="nav-icon">◎</span><span>Mi perfil</span></a>
+        <a class="nav-link" href="#"><span class="nav-icon">⚙</span><span>Configuración</span></a>
+        <a class="nav-link logout" href="#"><span class="nav-icon">⇥</span><span>Cerrar sesión</span></a>
+      </nav>
+
+      <!-- <div class="sidebar-landscape" aria-hidden="true">
+        <div class="hill h1"></div>
+        <div class="hill h2"></div>
+        <div class="tree t1"></div><div class="tree t2"></div><div class="tree t3"></div>
+        <div class="house"><i></i><b></b></div>
+        <div class="solar-panel panel-left"></div>
+        <div class="solar-panel panel-right"></div>
+      </div> -->
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div></div>
+        <div class="top-actions">
+          <a href="#" aria-label="Notificaciones" class="top-icon">♧<span class="notification-dot"></span></a>
+          <a href="#" aria-label="Perfil" class="top-icon">◎</a>
+        </div>
+      </header>
+
+      <section class="consumption-card card" aria-labelledby="consumo-title">
+        <div class="consumption-summary">
+          <p class="eyebrow">Tu consumo:</p>
+          <div class="consumption-value">128.6 <span>kWh</span></div>
+          <div class="energy-symbol" aria-hidden="true">ϟ</div>
+        </div>
+
+        <div class="chart-panel">
+          <div class="chart-heading">
+            <h2 id="consumo-title">Consumo mensual (kWh)</h2>
+            <div class="chart-dots"><i class="selected"></i><i></i><i></i></div>
+          </div>
+          <div class="chart">
+            <div class="y-axis">
+              <span>200</span><span>150</span><span>100</span><span>50</span><span>0</span>
+            </div>
+            <div class="bars">
+              <div class="bar-wrap"><span class="bar-label">120.4</span><div class="bar" style="--h:60.2%"></div><span>Ene</span></div>
+              <div class="bar-wrap"><span class="bar-label">98.7</span><div class="bar" style="--h:49.35%"></div><span>Feb</span></div>
+              <div class="bar-wrap"><span class="bar-label">110.2</span><div class="bar" style="--h:55.1%"></div><span>Mar</span></div>
+              <div class="bar-wrap"><span class="bar-label">132.6</span><div class="bar" style="--h:66.3%"></div><span>Abr</span></div>
+              <div class="bar-wrap"><span class="bar-label">145.3</span><div class="bar" style="--h:72.65%"></div><span>May</span></div>
+              <div class="bar-wrap"><span class="bar-label">128.6</span><div class="bar" style="--h:64.3%"></div><span>Jun</span></div>
+              <div class="bar-wrap"><span class="bar-label">116.8</span><div class="bar" style="--h:58.4%"></div><span>Jul</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="middle-grid">
+        <article class="card appliances-card">
+          <div class="section-title-row">
+            <h2>Tus electrodomésticos</h2>
+          </div>
+          <div class="appliance-list">
+            <a href="#" class="appliance">
+              <div class="appliance-icon fridge"></div><strong>Nevera</strong><small>45.2 kWh</small>
+            </a>
+            <a href="#" class="appliance">
+              <div class="appliance-icon washer"></div><strong>Lavadora</strong><small>28.1 kWh</small>
+            </a>
+            <a href="#" class="appliance">
+              <div class="appliance-icon ac"></div><strong>Aire<br>acondicionado</strong><small>22.4 kWh</small>
+            </a>
+            <a href="#" class="appliance">
+              <div class="appliance-icon tv"></div><strong>Televisor</strong><small>12.7 kWh</small>
+            </a>
+            <a href="#" class="appliance">
+              <div class="appliance-icon bulb">♢</div><strong>Bombilla</strong><small>8.6 kWh</small>
+            </a>
+            <a href="#" class="appliance-next" aria-label="Ver más electrodomésticos">›</a>
+          </div>
+          <div class="progress"><span></span></div>
+        </article>
+
+        <div class="actions-column">
+          <a class="solar-cta" href="#">
+            <span class="cta-solar-icon">☼</span>
+            <span>Implementa energía<br>solar en tu hogar</span>
+            <b>›</b>
+          </a>
+          <a class="edit-button" href="#">
+            <span class="gear">⚙</span>
+            <span>Editar electrodomésticos</span>
+            <b>›</b>
+          </a>
+        </div>
+      </section>
+
+      <section class="learn-card card">
+        <div class="learn-copy">
+          <div class="learn-icon">◇</div>
+          <div>
+            <h2>Aprende cómo<br>ahorrar más energía</h2>
+            <p>Consejos, guías y herramientas para<br>optimizar tu consumo de energía.</p>
+          </div>
+        </div>
+        <div class="learn-illustration" aria-hidden="true">
+          <div class="sun"></div>
+          <div class="city"></div>
+          <div class="solar-house">
+            <div class="roof"></div><div class="wall"></div>
+            <div class="door"></div><div class="window"></div>
+            <div class="house-panel"></div>
+          </div>
+          <div class="bush"></div>
+        </div>
+        <a href="#" class="learn-button">Ir a Aprende <span>›</span></a>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
