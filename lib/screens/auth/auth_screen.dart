@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/responsive.dart';
+import '../../widgets/skeletons.dart';
 import '../../widgets/solar_logo.dart';
 import '../../widgets/solar_text_field.dart';
 import '../../widgets/solar_buttons.dart';
@@ -29,11 +30,15 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   final _kwh = TextEditingController();
   String? _appliance;
   bool _loading = false;
+  bool _boot = true; // skeleton inicial (simula carga sesión)
 
   @override
   void initState() {
     super.initState();
     _tab = TabController(length: 2, vsync: this);
+    Future.delayed(const Duration(milliseconds: 900), () {
+      if (mounted) setState(() => _boot = false);
+    });
   }
 
   @override
@@ -72,13 +77,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     await Future.delayed(const Duration(milliseconds: 900));
     if (!mounted) return;
     setState(() => _loading = false);
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
-  }
-
-  Future<void> _mockOAuth(String provider) async {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Conectando con $provider… (simulado)'), duration: const Duration(milliseconds: 900)));
-    await Future.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
   }
 
@@ -159,7 +157,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                     const SizedBox(height: 12),
                     SizedBox(
                       height: 640,
-                      child: TabBarView(controller: _tab, children: [_loginForm(dark: true), _registerForm(dark: true)]),
+                      child: _boot
+                          ? const AuthFormSkeleton(dark: true)
+                          : TabBarView(controller: _tab, children: [_loginForm(dark: true), _registerForm(dark: true)]),
                     ),
                   ],
                 ),
@@ -182,7 +182,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
             constraints: const BoxConstraints(maxWidth: 980),
             child: Card(
               clipBehavior: Clip.antiAlias,
-              child: IntrinsicHeight(
+              child: SizedBox(
+                height: 680,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -215,7 +216,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           children: [
                             TabBar(controller: _tab, labelColor: AppColors.primaryDark, unselectedLabelColor: AppColors.textMedium, indicatorColor: AppColors.accent, labelStyle: const TextStyle(fontWeight: FontWeight.w800), tabs: const [Tab(text: 'Iniciar sesión'), Tab(text: 'Registro')]),
                             const SizedBox(height: 16),
-                            SizedBox(height: 560, child: TabBarView(controller: _tab, children: [_loginForm(dark: false), _registerForm(dark: false)])),
+                            Expanded(child: _boot ? const AuthFormSkeleton() : TabBarView(controller: _tab, children: [_loginForm(dark: false), _registerForm(dark: false)])),
                           ],
                         ),
                       ),
@@ -250,18 +251,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           ),
           const SizedBox(height: 8),
           SolarPrimaryButton(label: 'Iniciar sesión', icon: Icons.login_rounded, loading: _loading, onPressed: _mockLogin),
-          const SizedBox(height: 12),
-          Row(children: [
-            Expanded(child: Divider(color: dark ? Colors.white24 : AppColors.divider)),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text('o continúa con', style: TextStyle(color: sub, fontSize: 12))),
-            Expanded(child: Divider(color: dark ? Colors.white24 : AppColors.divider)),
-          ]),
-          const SizedBox(height: 12),
-          Row(children: [
-            SolarSocialButton(label: 'Google', icon: Icons.g_mobiledata_rounded, iconColor: AppColors.error, dark: dark, onPressed: () => _mockOAuth('Google')),
-            const SizedBox(width: 12),
-            SolarSocialButton(label: 'Apple', icon: Icons.apple_rounded, iconColor: dark ? Colors.white : Colors.black, dark: dark, onPressed: () => _mockOAuth('Apple')),
-          ]),
           const SizedBox(height: 12),
           Wrap(alignment: WrapAlignment.center, crossAxisAlignment: WrapCrossAlignment.center, children: [
             Text('¿No tienes cuenta?', style: TextStyle(color: sub, fontSize: 13)),
@@ -340,6 +329,34 @@ class _DesktopBullets extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(children: [const Icon(Icons.check_circle_rounded, color: AppColors.accent, size: 18), const SizedBox(width: 8), Expanded(child: Text(t, style: const TextStyle(color: Colors.white, fontSize: 13)))]),
           ),
+      ],
+    );
+  }
+}
+
+/// Skeleton del formulario auth (se ve 900ms al abrir login/registro).
+class AuthFormSkeleton extends StatelessWidget {
+  final bool dark;
+  const AuthFormSkeleton({super.key, this.dark = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SkeletonBox(height: 22, width: 180, radius: 6),
+        SizedBox(height: 8),
+        SkeletonBox(height: 14, width: 240, radius: 6),
+        SizedBox(height: 16),
+        SkeletonBox(height: 14, width: 120, radius: 6),
+        SizedBox(height: 6),
+        SkeletonBox(height: 50, radius: 10),
+        SizedBox(height: 12),
+        SkeletonBox(height: 14, width: 120, radius: 6),
+        SizedBox(height: 6),
+        SkeletonBox(height: 50, radius: 10),
+        SizedBox(height: 16),
+        SkeletonBox(height: 50, radius: 12),
       ],
     );
   }
