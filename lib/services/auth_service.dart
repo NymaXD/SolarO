@@ -82,6 +82,36 @@ class AuthService {
     throw AuthException(_backendMessage(res.body));
   }
 
+  /// Registro real contra POST /auth/register.
+  /// El backend exige EXACTAMENTE {nombre, email, contrasena} y política
+  /// de clave (8+, mayúscula, minúscula, número). 201 = creado (sin token).
+  Future<void> register({required String nombre, required String email, required String contrasena}) async {
+    late http.Response res;
+    try {
+      res = await _client
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/auth/register'),
+            headers: const {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'nombre': nombre.trim(),
+              'email': email.trim().toLowerCase(),
+              'contrasena': contrasena,
+            }),
+          )
+          .timeout(ApiConfig.timeout);
+    } on TimeoutException {
+      throw const AuthException('El servidor tardó demasiado. Verifica tu conexión.');
+    } on SocketException {
+      throw AuthException('No se pudo conectar con ${ApiConfig.baseUrl}. ¿El backend está corriendo?');
+    } on http.ClientException {
+      throw AuthException('Error de red al contactar ${ApiConfig.baseUrl}.');
+    }
+
+    if (res.statusCode == 201) return;
+    // 400/409/422/500: mostrar el "message" del backend tal cual.
+    throw AuthException(_backendMessage(res.body));
+  }
+
   static String _backendMessage(String body) {
     try {
       final json = jsonDecode(body) as Map<String, dynamic>;

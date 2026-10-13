@@ -29,8 +29,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   final _name = TextEditingController();
   final _regEmail = TextEditingController();
   final _regPass = TextEditingController();
-  final _kwh = TextEditingController();
-  String? _appliance;
   bool _loading = false;
   bool _boot = true; // skeleton inicial (simula carga sesión)
 
@@ -51,7 +49,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     _name.dispose();
     _regEmail.dispose();
     _regPass.dispose();
-    _kwh.dispose();
     super.dispose();
   }
 
@@ -72,22 +69,23 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     }
   }
 
+  /// Registro real contra POST /auth/register. Al crear, pasa al Login
+  /// con el correo precargado para iniciar sesión.
   Future<void> _mockRegister() async {
     if (!(_regKey.currentState?.validate() ?? false)) return;
-    // Electrodoméstico y kWh opcionales en registro: se completan en Inicio.
-    // Si hay kWh, validar formato solo si no está vacío.
-    if (_kwh.text.trim().isNotEmpty) {
-      final err = SolarValidators.kwh(_kwh.text);
-      if (err != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-        return;
-      }
-    }
     setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
-    setState(() => _loading = false);
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
+    try {
+      await AuthService().register(nombre: _name.text, email: _regEmail.text, contrasena: _regPass.text);
+      if (!mounted) return;
+      _email.text = _regEmail.text.trim().toLowerCase();
+      _tab.animateTo(0);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usuario creado. Ahora inicia sesión.')));
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   void _forgot() {
@@ -282,37 +280,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
             Text('Registro de Usuario', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: dark ? Colors.white : AppColors.textDark)),
             Text('Este es el primer paso para empezar a ahorrar y utilizar energías limpias.', style: TextStyle(color: sub, fontSize: 13)),
             const SizedBox(height: 16),
-            SolarTextField(controller: _name, label: 'Nombre completo', hint: 'Ingresa tu nombre completo', prefix: Icons.person_outline_rounded, validator: (v) => SolarValidators.required(v, 'Ingresa tu nombre'), dark: dark),
+            SolarTextField(controller: _name, label: 'Nombre completo', hint: 'Ingresa tu nombre completo', prefix: Icons.person_outline_rounded, validator: SolarValidators.personName, dark: dark),
             const SizedBox(height: 12),
             SolarTextField(controller: _regEmail, label: 'Correo electrónico', hint: 'usuario@correo.com', prefix: Icons.email_outlined, keyboardType: TextInputType.emailAddress, validator: SolarValidators.email, dark: dark),
             const SizedBox(height: 12),
-            SolarTextField(controller: _regPass, label: 'Contraseña', hint: 'Mínimo 6 caracteres', prefix: Icons.lock_outline_rounded, obscure: true, validator: SolarValidators.password, dark: dark),
-            const SizedBox(height: 12),
-            Text('Electrodoméstico (opcional, se completa después)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: dark ? Colors.white : AppColors.textDark)),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<String>(
-              initialValue: _appliance,
-              dropdownColor: dark ? AppColors.primaryDark : Colors.white,
-              style: TextStyle(color: dark ? Colors.white : AppColors.textDark),
-              decoration: InputDecoration(
-                hintText: 'Selecciona un electrodoméstico',
-                prefixIcon: const Icon(Icons.kitchen_outlined),
-                filled: true,
-                fillColor: dark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: dark ? Colors.white30 : AppColors.divider)),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'nevera', child: Text('Nevera')),
-                DropdownMenuItem(value: 'lavadora', child: Text('Lavadora')),
-                DropdownMenuItem(value: 'aire', child: Text('Aire acondicionado')),
-                DropdownMenuItem(value: 'tv', child: Text('Televisor')),
-                DropdownMenuItem(value: 'bombilla', child: Text('Bombilla')),
-              ],
-              onChanged: (v) => setState(() => _appliance = v),
-            ),
-            const SizedBox(height: 12),
-            SolarTextField(controller: _kwh, label: 'Consumo mensual (kWh) (opcional)', hint: 'Ingresa el consumo mensual en kWh', prefix: Icons.bolt_outlined, keyboardType: const TextInputType.numberWithOptions(decimal: true), dark: dark),
-            Text('Ejemplo: 15 (puedes dejarlo vacío, lo registrarás en Inicio)', style: TextStyle(color: sub, fontSize: 12)),
+            SolarTextField(controller: _regPass, label: 'Contraseña', hint: '8+, mayúscula, minúscula y número', prefix: Icons.lock_outline_rounded, obscure: true, validator: SolarValidators.registerPassword, dark: dark),
             const SizedBox(height: 12),
             SolarPrimaryButton(label: 'Registrarme', icon: Icons.person_add_alt_rounded, loading: _loading, onPressed: _mockRegister),
             const SizedBox(height: 8),

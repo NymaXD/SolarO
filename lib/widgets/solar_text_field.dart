@@ -111,6 +111,23 @@ class SolarValidators {
     return null;
   }
 
+  /// Política del backend (POST /auth/register): 8+, mayúscula, minúscula y número.
+  static String? registerPassword(String? v) {
+    if (v == null || v.isEmpty) return 'Crea una contraseña';
+    if (v.length < 8) return 'Mínimo 8 caracteres';
+    if (!RegExp(r'[A-Z]').hasMatch(v)) return 'Incluye una mayúscula';
+    if (!RegExp(r'[a-z]').hasMatch(v)) return 'Incluye una minúscula';
+    if (!RegExp(r'[0-9]').hasMatch(v)) return 'Incluye un número';
+    return null;
+  }
+
+  static String? personName(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Ingresa tu nombre';
+    if (v.trim().length < 3) return 'Mínimo 3 caracteres';
+    if (v.trim().isNotEmpty && double.tryParse(v.trim()) != null) return 'Nombre inválido';
+    return null;
+  }
+
   static String? required(String? v, [String msg = 'Campo requerido']) {
     if (v == null || v.trim().isEmpty) return msg;
     return null;
