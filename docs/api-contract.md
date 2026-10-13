@@ -19,7 +19,7 @@
 |---|---|
 | Desarrollo local | `http://127.0.0.1:5000` |
 | Emulador Android | `http://10.0.2.2:5000` |
-| Producción | Sin definir |
+| Producción | `https://solaro-jboy.onrender.com` |
 
 ## 2. Convenciones
 
