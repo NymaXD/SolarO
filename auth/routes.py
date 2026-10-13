@@ -2,7 +2,7 @@
 
 from flask import Blueprint, jsonify, request, current_app
 from flask_jwt_extended import create_access_token
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 from auth.service import *
 from auth.exceptions import ContrasenaInsegura
@@ -92,7 +92,14 @@ def register():
 
     # --- Comprobar si el email ya existe ---
 
-    usuario_existente = buscar_email_existente(email)
+    try:
+        usuario_existente = buscar_email_existente(email)
+    
+    except OperationalError:
+        current_app.logger.exception("Error de conexión a la base de datos.")
+        return jsonify({
+            "message": "Error de conexión. Intente nuevamente."
+        }), 500
     
     if usuario_existente:
         return jsonify({
@@ -160,7 +167,15 @@ def login():
 
     # --- Buscar usuario ---
     email = data["email"].strip().lower()
-    usuario = buscar_email_existente(email)
+    
+    try:
+        usuario_existente = buscar_email_existente(email)
+    
+    except OperationalError:
+        current_app.logger.exception("Error de conexión a la base de datos.")
+        return jsonify({
+            "message": "Error de conexión. Intente nuevamente."
+        }), 500
 
     if not usuario:
         return jsonify({
@@ -223,7 +238,15 @@ def forgot_password():
         }), 422
 
     # --- Buscar usuario ---
-    usuario = buscar_email_existente(data["email"].strip().lower())
+    try:
+        usuario_existente = buscar_email_existente(email)
+    
+    except OperationalError:
+        current_app.logger.exception("Error de conexión a la base de datos.")
+        return jsonify({
+            
+            "message": "Error de conexión. Intente nuevamente."
+        }), 500
 
     # --- Generar token de recuperación ---
     if usuario:
