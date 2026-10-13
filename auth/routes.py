@@ -56,7 +56,7 @@ def register():
             "message": "El nombre es inválido"
         }), 422
 
-    if len(data["nombre"]) < 3:
+    if len(data["nombre"].strip()) < 3:
         return jsonify({
             "message": "El nombre debe tener al menos 3 caracteres."
         }), 422
