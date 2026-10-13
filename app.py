@@ -3,6 +3,7 @@
 import os
 
 from flask import Flask
+from flask_cors import CORS
 from dotenv import load_dotenv
 
 from extensions import db, bcrypt, jwt, mail
@@ -16,11 +17,11 @@ load_dotenv()
 app = Flask(__name__)
 
 # === CONFIGURACION PARA ORM ===
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # === CONFIGURACION JWT ===
-app.config["JWT_SECRET_KEY"] = os.environ["JWT_SECRET_KEY"]
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=15)
 
 # === CONFIGURACION MAIL ===
@@ -28,11 +29,15 @@ app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
 app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", "587"))
 app.config["MAIL_USE_TLS"] = True
 app.config["MAIL_USE_SSL"] = False
-app.config["MAIL_USERNAME"] = os.environ["MAIL_USERNAME"]
-app.config["MAIL_PASSWORD"] = os.environ["MAIL_PASSWORD"]
-app.config["MAIL_DEFAULT_SENDER"] = os.environ["MAIL_USERNAME"]
-app.config["FRONTEND_URL"] = os.environ["FRONTEND_URL"]
+app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
+app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USERNAME")
 
+# === CONFIGURACION CORS ===
+app.config["FRONTEND_URL"] = os.environ.get("FRONTEND_URL")
+CORS(app, origins=[app.config["FRONTEND_URL"]], supports_credentials=True)
+
+# === INCIALIZACION SERVICIOS ===
 db.init_app(app)
 bcrypt.init_app(app)
 jwt.init_app(app)
