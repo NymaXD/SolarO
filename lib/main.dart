@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'layout/app_shell.dart';
+import 'services/session_store.dart';
 import 'theme/app_theme.dart';
 import 'screens/auth/auth_screen.dart';
 
@@ -7,7 +9,7 @@ void main() {
   runApp(const SolarOApp());
 }
 
-/// Raíz SolarO: solo Theme + Auth (frontend puro, sin servicios).
+/// Raíz SolarO: si hay JWT guardado entra directo al AppShell, si no al Auth.
 class SolarOApp extends StatelessWidget {
   const SolarOApp({super.key});
 
@@ -25,7 +27,17 @@ class SolarOApp extends StatelessWidget {
           child: child!,
         );
       },
-      home: const AuthScreen(),
+      home: FutureBuilder<String?>(
+        future: SessionStore.readToken(),
+        builder: (context, snap) {
+          if (!snap.hasData && snap.connectionState != ConnectionState.done) {
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          }
+          final token = snap.data;
+          if (token != null && token.isNotEmpty) return const AppShell();
+          return const AuthScreen();
+        },
+      ),
     );
   }
 }

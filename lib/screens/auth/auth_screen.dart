@@ -6,6 +6,8 @@ import '../../widgets/solar_logo.dart';
 import '../../widgets/solar_text_field.dart';
 import '../../widgets/solar_buttons.dart';
 import '../../layout/app_shell.dart';
+import '../../services/auth_service.dart';
+import '../../services/session_store.dart';
 
 /// Pantalla Auth responsiva:
 /// - Móvil: fondo azul full (mockup Registro) con tabs Login/Registro
@@ -53,13 +55,21 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     super.dispose();
   }
 
+  /// Login real contra POST /auth/login. Guarda JWT y entra al AppShell.
   Future<void> _mockLogin() async {
     if (!(_loginKey.currentState?.validate() ?? false)) return;
     setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 900)); // simula red
-    if (!mounted) return;
-    setState(() => _loading = false);
-    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
+    try {
+      final session = await AuthService().login(email: _email.text, contrasena: _pass.text);
+      await SessionStore.save(session);
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _mockRegister() async {

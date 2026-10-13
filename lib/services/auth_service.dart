@@ -1,0 +1,95 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:http/http.dart' as http;
+
+import 'api_config.dart';
+
+/// Error de autenticación con mensaje listo para mostrar en UI.
+/// El mensaje viene del backend (`message`) o es de conectividad.
+class AuthException implements Exception {
+  final String message;
+  const AuthException(this.message);
+  @override
+  String toString() => 'AuthException: $message';
+}
+
+/// Usuario mínimo devuelto por POST /auth/login.
+class AuthUser {
+  final int id;
+  final String nombre;
+  final String email;
+  const AuthUser({required this.id, required this.nombre, required this.email});
+
+  factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
+        id: (json['id_usuario'] as num).toInt(),
+        nombre: json['nombre'] as String? ?? '',
+        email: json['email'] as String? ?? '',
+      );
+
+  Map<String, String> toJson() => {'id_usuario': '$id', 'nombre': nombre, 'email': email};
+
+  factory AuthUser.fromPrefs(Map<String, String> prefs) => AuthUser(
+        id: int.tryParse(prefs['id_usuario'] ?? '') ?? 0,
+        nombre: prefs['nombre'] ?? '',
+        email: prefs['email'] ?? '',
+      );
+}
+
+/// Resultado del login: token JWT + usuario.
+class AuthSession {
+  final String accessToken;
+  final AuthUser user;
+  const AuthSession({required this.accessToken, required this.user});
+}
+
+/// Llamadas a POST /auth/login (contrato Backend v1.1).
+/// El backend exige EXACTAMENTE {email, contrasena}: ni más ni menos claves.
+class AuthService {
+  final http.Client _client;
+  AuthService({http.Client? client}) : _client = client ?? http.Client();
+
+  Future<AuthSession> login({required String email, required String contrasena}) async {
+    late http.Response res;
+    try {
+      res = await _client
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/auth/login'),
+            headers: const {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email.trim().toLowerCase(), 'contrasena': contrasena}),
+          )
+          .timeout(ApiConfig.timeout);
+    } on TimeoutException {
+      throw const AuthException('El servidor tardó demasiado. Verifica tu conexión.');
+    } on SocketException {
+      throw AuthException('No se pudo conectar con ${ApiConfig.baseUrl}. ¿El backend está corriendo?');
+    } on http.ClientException {
+      throw AuthException('Error de red al contactar ${ApiConfig.baseUrl}.');
+    }
+
+    if (res.statusCode == 200) {
+      final body = jsonDecode(res.body) as Map<String, dynamic>;
+      final token = body['access_token'] as String?;
+      final userJson = body['user'] as Map<String, dynamic>?;
+      if (token == null || token.isEmpty || userJson == null) {
+        throw const AuthException('Respuesta inesperada del servidor.');
+      }
+      return AuthSession(accessToken: token, user: AuthUser.fromJson(userJson));
+    }
+
+    // 400/401/422/500: mostrar el "message" del backend tal cual.
+    throw AuthException(_backendMessage(res.body));
+  }
+
+  static String _backendMessage(String body) {
+    try {
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      final msg = json['message'] as String?;
+      if (msg != null && msg.trim().isNotEmpty) return msg;
+    } catch (_) {
+      // cuerpo no-JSON: mensaje genérico abajo
+    }
+    return 'Ocurrió un error. Intenta nuevamente.';
+  }
+}

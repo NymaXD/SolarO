@@ -9,6 +9,7 @@ import '../screens/simulator/simulator_screen.dart';
 import '../screens/feedback/feedback_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/settings/settings_screen.dart';
+import '../services/session_store.dart';
 import '../widgets/notifications_panel.dart';
 
 /// Shell adaptativo con 6 secciones:
@@ -43,6 +44,7 @@ class _AppShellState extends State<AppShell> {
       ),
     );
     if (confirm != true || !mounted) return;
+    await SessionStore.clear(); // JWT stateless: basta borrar el token local.
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const AuthScreen()),
