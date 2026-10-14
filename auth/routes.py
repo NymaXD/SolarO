@@ -273,6 +273,11 @@ def forgot_password():
                 "message": "Si el correo está registrado, recibirás instrucciones para recuperar tu contraseña."
                 }), 200
 
+    else:
+        return jsonify({
+                "message": "Si el correo está registrado, recibirás instrucciones para recuperar tu contraseña."
+                }), 200
+
 
 @auth.route("/auth/reset-password", methods=["POST"])
 @jwt_required()
