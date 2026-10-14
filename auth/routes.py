@@ -302,6 +302,11 @@ def reset_password():
         return jsonify({"message": "Usuario no encontrado."}), 404
 
     # --- Validar que el token no haya sido usado ---
+
+    current_app.logger.warning(
+        "pwd token=%s actual=%s", claims.get("pwd"), huella_contrasena(usuario)
+    )
+
     if not hmac.compare_digest(claims.get("pwd", ""), huella_contrasena(usuario)):
         return jsonify({"message": "El enlace ya fue utilizado o no es válido."}), 401
 
