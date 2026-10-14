@@ -40,7 +40,7 @@ bcrypt.init_app(app)
 jwt.init_app(app)
 CORS(app)
 
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=3)
 
 
 # === BLUEPRINTS ===
