@@ -156,6 +156,8 @@ def enviar_correo_recuperacion(destinatario: str, token: str):
     """Envía un email de recuperación de contraseña."""
     enlace = f"{current_app.config['FRONTEND_URL']}/reset-password?t={token}"
 
+    print(token)
+
     html = (
         "<p>Recibimos una solicitud para restablecer tu contraseña de SolarO.</p>"
         f'<p>Para restablecerla haz clic <a href="{enlace}">aquí</a>.</p>'
