@@ -257,7 +257,7 @@ def forgot_password():
         
         token = create_access_token(
             identity=str(usuario.id_usuario),
-            additional_claims={"purpose": "password_reset"},
+            additional_claims={"purpose": "password_reset", "pwd": huella_contrasena(usuario)},
             expires_delta=timedelta(minutes=15),
         )
 
