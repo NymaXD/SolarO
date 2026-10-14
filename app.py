@@ -6,7 +6,7 @@ from flask import Flask
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-from extensions import db, bcrypt, jwt, mail
+from extensions import db, bcrypt, jwt
 from auth.routes import auth
 import models
 
