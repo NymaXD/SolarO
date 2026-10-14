@@ -3,7 +3,7 @@
 import hmac
 
 from flask import Blueprint, jsonify, request, current_app
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, create_refresh_token
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from sqlalchemy.exc import IntegrityError, OperationalError
 
@@ -16,12 +16,11 @@ from models import Usuario
 from datetime import timedelta
 
 # Registrar blueprint 'auth'
-auth = Blueprint("auth", __name__)
-
+auth = Blueprint("auth", __name__, url_prefix="/auth")
 
 # === ENDPOINTS ===
 
-@auth.route("/auth/register", methods=["POST"])
+@auth.route("/register", methods=["POST"])
 def register():
     
     data = request.get_json(silent=True)
@@ -136,7 +135,7 @@ def register():
         }), 201
 
 
-@auth.route("/auth/login", methods=["POST"])
+@auth.route("/login", methods=["POST"])
 def login():
     
     data = request.get_json(silent=True)
@@ -194,12 +193,18 @@ def login():
             "message": "Datos incorrectos. Verifique nuevamente."
         }), 401
 
-    # --- Generar token ---
-    access_token = create_access_token(identity=str(usuario.id_usuario))
+    # --- Generar tokens ---
 
+    # Token de acceso
+    access_token = create_access_token(identity=str(usuario.id_usuario), additional_claims={"purpose": "session"})
+    
+    # Token de refresco
+    refresh_token = create_refresh_token(identity=str(usuario.id_usuario), additional_claims={"pwd": huella_contrasena(usuario)})
+    
     return jsonify({
         "message": "Inicio de sesión exitoso.",
         "access_token": access_token,
+        "refresh_token": refresh_token,
         "user": {
             "id_usuario": usuario.id_usuario,
             "nombre": usuario.nombre,
@@ -208,7 +213,7 @@ def login():
     }), 200
 
 
-@auth.route("/auth/forgot-password", methods=["POST"])
+@auth.route("/forgot-password", methods=["POST"])
 def forgot_password():
 
     data = request.get_json(silent=True)
@@ -281,7 +286,7 @@ def forgot_password():
                 }), 200
 
 
-@auth.route("/auth/reset-password", methods=["POST"])
+@auth.route("/reset-password", methods=["POST"])
 @jwt_required()
 def reset_password():
 
@@ -302,16 +307,11 @@ def reset_password():
         return jsonify({"message": "Usuario no encontrado."}), 404
 
     # --- Validar que el token no haya sido usado ---
-
-    current_app.logger.warning(
-        "pwd token=%s actual=%s", claims.get("pwd"), huella_contrasena(usuario)
-    )
-
     if not hmac.compare_digest(claims.get("pwd", ""), huella_contrasena(usuario)):
         return jsonify({"message": "El enlace ya fue utilizado o no es válido."}), 401
 
     # --- Validar datos ---
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
     # Request válida
     if not isinstance(data, dict):
@@ -374,27 +374,23 @@ def reset_password():
         }), 200
 
 
-@auth.route("/auth/me", methods=["GET"])
-@jwt_required()
-def obtener_perfil():
+@auth.route("/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh():
+    usuario = db.session.get(Usuario, int(get_jwt_identity()))
 
-    # --- Validar que el token no sea de recuperación ---
-    if get_jwt().get("purpose") == "password_reset":
+    if usuario is None or not hmac.compare_digest(
+        get_jwt().get("pwd", ""), huella_contrasena(usuario)
+    ):
+        return jsonify({"message": "Sesión no válida. Inicie sesión nuevamente."}), 401
 
-        return jsonify({
-            "message": "No tiene permiso para realizar esta operación."
-            }), 403
-
-    identidad = get_jwt_identity()
-    usuario = db.session.get(Usuario, int(identidad))
-
-    if usuario is None:
-        return jsonify({
-            "message": "Usuario no encontrado."
-        }), 404
-
-    return jsonify({
-        "id_usuario": usuario.id_usuario,
-        "nombre": usuario.nombre,
-        "email": usuario.email
-    }), 200 
+    access_token = create_access_token(
+        identity=str(usuario.id_usuario),
+        additional_claims={"purpose": "session"},
+    )
+    
+    refresh_token = create_refresh_token(
+    identity=str(usuario.id_usuario),
+    additional_claims={"pwd": huella_contrasena(usuario)},
+    )
+    return jsonify({"access_token": access_token, "refresh_token": refresh_token}), 200
