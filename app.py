@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 from extensions import db, bcrypt, jwt
 from auth.routes import auth
+from users.routes import users
 import models
 
 from datetime import timedelta
@@ -24,6 +25,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # === CONFIGURACION JWT ===
 app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=15)
+app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=7)
 
 # === CONFIGURACION MAIL ===
 app.config["BREVO_API_URL"] = os.environ.get("BREVO_API_URL")
@@ -47,6 +49,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=3)
 # Rutas a los diferentes módulos de la API
 
 app.register_blueprint(auth)
+app.register_blueprint(users)
 
 
 if __name__ == "__main__":
