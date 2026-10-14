@@ -347,6 +347,12 @@ def reset_password():
         }), 500
 
     else:
+        
+        try:
+            enviar_correo_contrasena_cambiada(usuario.email)
+        except Exception:
+            current_app.logger.exception("No se pudo enviar el aviso de cambio de contraseña.")
+
         return jsonify({
             "message": "Contraseña actualizada correctamente. Ahora puede iniciar sesión."
         }), 200
