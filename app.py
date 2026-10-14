@@ -11,6 +11,7 @@ from auth.routes import auth
 import models
 
 from datetime import timedelta
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 load_dotenv()
 
@@ -37,8 +38,9 @@ app.config["CORS_ORIGINS"] = os.environ["FRONTEND_URL"]
 db.init_app(app)
 bcrypt.init_app(app)
 jwt.init_app(app)
-#mail.init_app(app)
 CORS(app)
+
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
 
 
 # === BLUEPRINTS ===

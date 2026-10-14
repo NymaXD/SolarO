@@ -347,9 +347,14 @@ def reset_password():
         }), 500
 
     else:
-        
+
         try:
-            enviar_correo_contrasena_cambiada(usuario.email)
+            enviar_correo_contrasena_cambiada(
+                usuario.email,
+                request.remote_addr or "desconocida",
+                describir_dispositivo(request.headers.get("User-Agent", "")),
+            )
+
         except Exception:
             current_app.logger.exception("No se pudo enviar el aviso de cambio de contraseña.")
 

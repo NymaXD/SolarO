@@ -1,7 +1,6 @@
 """Lógica de validaciones del módulo de autenticación"""
 
 import re, os, requests
-from typing import Literal
 from flask import jsonify, current_app
 
 from user_agents import parse
@@ -170,12 +169,11 @@ def enviar_correo_recuperacion(destinatario: str, token: str):
     enviar_correo(destinatario, "Recupera tu contraseña de SolarO", html)
 
 
-def enviar_correo_contrasena_cambiada(destinatario: str):
+def enviar_correo_contrasena_cambiada(destinatario: str, ip: str, dispositivo: str):
     """Envía un correo avisando al usuario que su contraseña fue cambiada."""
 
     ahora = datetime.now(ZoneInfo("America/Bogota"))
     fecha = ahora.strftime("%d/%m/%Y %H:%M")
-    dispositivo = describir_dispositivo()
 
     html = (
         "<p>La contraseña de tu cuenta de SolarO fue cambiada correctamente.</p>"
