@@ -32,16 +32,17 @@ app.config["MAIL_USE_SSL"] = False
 app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USERNAME")
+app.config["FRONTEND_URL"] = os.environ.get("FRONTEND_URL")
 
 # === CONFIGURACION CORS ===
-app.config["FRONTEND_URL"] = os.environ.get("FRONTEND_URL")
-CORS(app, origins=[app.config["FRONTEND_URL"]], supports_credentials=True)
+app.config["CORS_ORIGINS"] = os.environ["FRONTEND_URL"]
 
 # === INCIALIZACION SERVICIOS ===
 db.init_app(app)
 bcrypt.init_app(app)
 jwt.init_app(app)
 mail.init_app(app)
+CORS(app)
 
 
 # === BLUEPRINTS ===
