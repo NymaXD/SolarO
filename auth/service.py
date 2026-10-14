@@ -175,6 +175,7 @@ def enviar_correo_contrasena_cambiada(destinatario: str):
 
     ahora = datetime.now(ZoneInfo("America/Bogota"))
     fecha = ahora.strftime("%d/%m/%Y %H:%M")
+    dispositivo = describir_dispositivo()
 
     html = (
         "<p>La contraseña de tu cuenta de SolarO fue cambiada correctamente.</p>"
