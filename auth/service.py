@@ -1,6 +1,6 @@
 """Lógica de validaciones del módulo de autenticación"""
 
-import re, os, requests
+import re, os, requests, hashlib
 from flask import jsonify, current_app
 
 from user_agents import parse
@@ -204,3 +204,7 @@ def describir_dispositivo(user_agent: str) -> str:
         return "Dispositivo desconocido"
 
     return f"{navegador} en {sistema}"
+
+
+def huella_contrasena(usuario) -> str:
+    return hashlib.sha256(usuario.contrasena_hash.encode()).hexdigest()[:16]

@@ -1,5 +1,7 @@
 """Endpoints del módulo de autenticación"""
 
+import hmac
+
 from flask import Blueprint, jsonify, request, current_app
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
@@ -298,6 +300,10 @@ def reset_password():
 
     if usuario is None:
         return jsonify({"message": "Usuario no encontrado."}), 404
+
+    # --- Validar que el token no haya sido usado ---
+    if not hmac.compare_digest(claims.get("pwd", ""), huella_contrasena(usuario)):
+        return jsonify({"message": "El enlace ya fue utilizado o no es válido."}), 401
 
     # --- Validar datos ---
     data = request.get_json()
