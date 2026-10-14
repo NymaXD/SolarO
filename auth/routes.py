@@ -252,6 +252,7 @@ def forgot_password():
 
     # --- Generar token de recuperación ---
     if usuario:
+        
         token = create_access_token(
             identity=str(usuario.id_usuario),
             additional_claims={"purpose": "password_reset"},
@@ -263,10 +264,14 @@ def forgot_password():
 
         except Exception:
             current_app.logger.exception("No se pudo enviar el correo de recuperación.")
+            return jsonify({
+                "message": "Error al enviar el correo de recuperación. Intente nuevamente"
+            }), 500
 
-    return jsonify({
-        "message": "Si el correo está registrado, recibirás instrucciones para recuperar tu contraseña."
-        }), 200
+        else:
+            return jsonify({
+                "message": "Si el correo está registrado, recibirás instrucciones para recuperar tu contraseña."
+                }), 200
 
 
 @auth.route("/auth/reset-password", methods=["POST"])
