@@ -2,14 +2,16 @@
 
 from flask import Blueprint, jsonify, request, current_app
 from flask_jwt_extended import create_access_token
+from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from auth.service import *
 from auth.exceptions import ContrasenaInsegura
 
-from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from extensions import db
 from models import Usuario
+
+from datetime import timedelta
 
 # Registrar blueprint 'auth'
 auth = Blueprint("auth", __name__)
@@ -169,7 +171,7 @@ def login():
     email = data["email"].strip().lower()
     
     try:
-        usuario_existente = buscar_email_existente(email)
+        usuario = buscar_email_existente(email)
     
     except OperationalError:
         current_app.logger.exception("Error de conexión a la base de datos.")
@@ -239,7 +241,7 @@ def forgot_password():
 
     # --- Buscar usuario ---
     try:
-        usuario_existente = buscar_email_existente(email)
+        usuario = buscar_email_existente(data["email"].strip().lower())
     
     except OperationalError:
         current_app.logger.exception("Error de conexión a la base de datos.")
