@@ -25,13 +25,9 @@ app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=15)
 
 # === CONFIGURACION MAIL ===
-app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
-app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", "587"))
-app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USE_SSL"] = False
-app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
-app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
-app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USERNAME")
+app.config["BREVO_API_URL"] = os.environ.get("BREVO_API_URL")
+app.config["BREVO_API_KEY"] = os.environ.get("BREVO_API_KEY")
+app.config["BREVO_SENDER_EMAIL"] = os.environ.get("BREVO_SENDER_EMAIL")
 app.config["FRONTEND_URL"] = os.environ.get("FRONTEND_URL")
 
 # === CONFIGURACION CORS ===

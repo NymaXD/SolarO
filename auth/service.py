@@ -1,9 +1,9 @@
 """Lógica de validaciones del módulo de autenticación"""
 
-import re
+import re, os, requests
 from typing import Literal
 from flask import jsonify, current_app
-from flask_mail import Message
+#from flask_mail import Message
 
 from auth.exceptions import ContrasenaInsegura
 from models import Usuario
@@ -102,8 +102,10 @@ def actualizar_contrasena(usuario: Usuario, nueva_contrasena: str):
         raise
 
 
-def enviar_correo_recuperacion(email: str, token: str) -> None:
-    """Envía un email de recuperación de contraseña al email introducido."""
+def enviar_correo_smtp(email: str, token: str) -> None:
+    """Función archivada. Usa SMTP. Puerto bloqueado por el PaaS utilizado.
+    
+    Envía un email de recuperación de contraseña al email introducido."""
 
     enlace = (
         f"{current_app.config['FRONTEND_URL']}"
@@ -123,3 +125,28 @@ def enviar_correo_recuperacion(email: str, token: str) -> None:
     )
 
     mail.send(mensaje)
+
+
+def enviar_correo_recuperacion(destinatario: str, token: str):
+    """Envía un email de recuperación de contraseña al email introducido."""
+
+    enlace = (
+        f"{current_app.config['FRONTEND_URL']}"
+        f"/reset-password?t={token}"
+    )
+
+    respuesta = requests.post(
+        current_app.config["BREVO_API_URL"],
+        headers={
+            "api-key": os.environ["BREVO_API_KEY"],
+            "Content-Type": "application/json",
+        },
+        json={
+            "sender": {"name": "SolarO", "email": os.environ["BREVO_SENDER_EMAIL"]},
+            "to": [{"email": destinatario}],
+            "subject": "Recupera tu contraseña de SolarO",
+            "htmlContent": f'<p>Usa este enlace para restablecer tu contraseña:</p><p><a href="{enlace}">{enlace}</a></p>',
+        },
+        timeout=10,
+    )
+    respuesta.raise_for_status()
