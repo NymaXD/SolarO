@@ -7,7 +7,7 @@ from flask import jsonify, current_app
 
 from auth.exceptions import ContrasenaInsegura
 from models import Usuario
-from extensions import db, bcrypt, mail
+from extensions import db, bcrypt
 
 
 def validar_contrasena(contrasena: str):
