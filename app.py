@@ -37,7 +37,7 @@ app.config["CORS_ORIGINS"] = os.environ["FRONTEND_URL"]
 db.init_app(app)
 bcrypt.init_app(app)
 jwt.init_app(app)
-mail.init_app(app)
+#mail.init_app(app)
 CORS(app)
 
 
