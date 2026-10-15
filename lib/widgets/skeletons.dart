@@ -114,9 +114,14 @@ class LearnListSkeleton extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: dark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
+                color: dark
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : (context.isDark ? AppColors.surfaceDark : Colors.white),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: dark ? Colors.white24 : AppColors.divider),
+                border: Border.all(
+                    color: dark
+                        ? Colors.white24
+                        : (context.isDark ? AppColors.borderDark : AppColors.divider)),
               ),
               child: const Row(
                 children: [

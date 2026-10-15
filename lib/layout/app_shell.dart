@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/lang.dart';
 import '../theme/responsive.dart';
 import '../widgets/solar_logo.dart';
 import '../screens/auth/auth_screen.dart';
@@ -10,6 +11,7 @@ import '../screens/feedback/feedback_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../services/session_store.dart';
+import '../widgets/account_menu.dart';
 import '../widgets/notifications_panel.dart';
 
 /// Shell adaptativo con 6 secciones:
@@ -23,7 +25,7 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _index = 0;
 
-  static const _titles = ['Inicio', 'Aprende', 'Simulador', 'Enviar comentarios', 'Mi perfil', 'Configuración'];
+  static List<String> get _titles => [tr('nav_home'), tr('nav_learn'), tr('nav_sim'), tr('nav_feedback'), tr('nav_profile'), tr('nav_settings')];
 
   void _go(int i) => setState(() => _index = i);
 
@@ -31,14 +33,14 @@ class _AppShellState extends State<AppShell> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Cerrar sesión'),
-        content: const Text('¿Seguro que quieres salir? Volverás a la pantalla de inicio de sesión.'),
+        title: Text(tr('logout_title')),
+        content: Text(tr('logout_sub')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('cancel'))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Cerrar sesión'),
+            child: Text(tr('logout')),
           ),
         ],
       ),
@@ -74,23 +76,12 @@ class _AppShellState extends State<AppShell> {
     // Bottom solo muestra las 3 principales; el resto va por drawer.
     final bottomIndex = _index <= 2 ? _index : 0;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const SolarLogo(fontSize: 20),
         actions: [
-          IconButton(tooltip: 'Notificaciones', onPressed: () => NotificationsPanel.show(context), icon: const Icon(Icons.notifications_none_rounded)),
-          PopupMenuButton<String>(
-            tooltip: 'Cuenta',
-            icon: const Icon(Icons.account_circle_outlined),
-            onSelected: (v) {
-              if (v == 'profile') _go(4);
-              if (v == 'logout') _logout();
-            },
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'profile', child: Text('Mi perfil')),
-              PopupMenuItem(value: 'logout', child: Text('Cerrar sesión')),
-            ],
-          ),
+          IconButton(tooltip: tr('notifs'), onPressed: () => NotificationsPanel.show(context), icon: const Icon(Icons.notifications_none_rounded)),
+          AccountMenuButton(onProfile: () => _go(4), onLogout: _logout),
           const SizedBox(width: 8),
         ],
       ),
@@ -116,7 +107,7 @@ class _AppShellState extends State<AppShell> {
                   },
                 ),
               const Divider(),
-              ListTile(leading: const Icon(Icons.logout_rounded, color: AppColors.error), title: const Text('Cerrar sesión'), onTap: () {
+              ListTile(leading: const Icon(Icons.logout_rounded, color: AppColors.error), title: Text(tr('logout')), onTap: () {
                 Navigator.pop(context);
                 _logout();
               }),
@@ -131,10 +122,10 @@ class _AppShellState extends State<AppShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: bottomIndex,
         onDestinationSelected: _go,
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Inicio'),
-          NavigationDestination(icon: Icon(Icons.school_outlined), selectedIcon: Icon(Icons.school_rounded), label: 'Aprende'),
-          NavigationDestination(icon: Icon(Icons.calculate_outlined), selectedIcon: Icon(Icons.calculate_rounded), label: 'Simulador'),
+        destinations: [
+          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home_rounded), label: tr('nav_home')),
+          NavigationDestination(icon: const Icon(Icons.school_outlined), selectedIcon: const Icon(Icons.school_rounded), label: tr('nav_learn')),
+          NavigationDestination(icon: const Icon(Icons.calculate_outlined), selectedIcon: const Icon(Icons.calculate_rounded), label: tr('nav_sim')),
         ],
       ),
     );
@@ -142,16 +133,16 @@ class _AppShellState extends State<AppShell> {
 
   // ---------- DESKTOP ----------
   Widget _desktopScaffold(List<Widget> pages) {
-    const items = [
-      (Icons.home_outlined, 'Inicio'),
-      (Icons.school_outlined, 'Aprende'),
-      (Icons.calculate_outlined, 'Simulador'),
-      (Icons.chat_bubble_outline_rounded, 'Enviar comentarios'),
-      (Icons.person_outline_rounded, 'Mi perfil'),
-      (Icons.settings_outlined, 'Configuración'),
+    final items = [
+      (Icons.home_outlined, tr('nav_home')),
+      (Icons.school_outlined, tr('nav_learn')),
+      (Icons.calculate_outlined, tr('nav_sim')),
+      (Icons.chat_bubble_outline_rounded, tr('nav_feedback')),
+      (Icons.person_outline_rounded, tr('nav_profile')),
+      (Icons.settings_outlined, tr('nav_settings')),
     ];
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Row(
         children: [
           Container(
@@ -165,7 +156,7 @@ class _AppShellState extends State<AppShell> {
                   for (int i = 0; i < items.length; i++)
                     _sideItem(i, items[i].$1, items[i].$2, i == _index, () => _go(i)),
                   const Spacer(),
-                  _sideItem(-1, Icons.logout_rounded, 'Cerrar sesión', false, _logout),
+                  _sideItem(-1, Icons.logout_rounded, tr('logout'), false, _logout),
                   const SizedBox(height: 12),
                   // Dibujo restaurado: casa + paneles solares
                   const Padding(
@@ -191,25 +182,14 @@ class _AppShellState extends State<AppShell> {
             child: Column(
               children: [
                 Container(
-                  color: Colors.white,
+                  color: context.cardBg,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   child: Row(
                     children: [
-                      Text(_titles[_index], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textDark)),
+                      Text(_titles[_index], style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.tDark)),
                       const Spacer(),
-                      IconButton(tooltip: 'Notificaciones', onPressed: () => NotificationsPanel.show(context), icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textDark)),
-                      PopupMenuButton<String>(
-                        tooltip: 'Cuenta',
-                        icon: const Icon(Icons.account_circle_outlined, color: AppColors.textDark),
-                        onSelected: (v) {
-                          if (v == 'profile') _go(4);
-                          if (v == 'logout') _logout();
-                        },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'profile', child: Text('Mi perfil')),
-                          PopupMenuItem(value: 'logout', child: Text('Cerrar sesión')),
-                        ],
-                      ),
+                      IconButton(tooltip: tr('notifs'), onPressed: () => NotificationsPanel.show(context), icon: Icon(Icons.notifications_none_rounded, color: context.tDark)),
+                      AccountMenuButton(onProfile: () => _go(4), onLogout: _logout),
                     ],
                   ),
                 ),

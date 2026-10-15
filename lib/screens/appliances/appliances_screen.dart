@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/lang.dart';
 import '../../widgets/solar_text_field.dart';
 import 'appliances_store.dart';
 
@@ -11,8 +12,8 @@ class AppliancesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Mis electrodomésticos'), leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () => Navigator.pop(context))),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(title: Text(tr('my_appliances')), leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () => Navigator.pop(context))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Center(
@@ -25,8 +26,8 @@ class AppliancesScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        const Expanded(child: Text('Registra tus equipos para calcular su consumo. Todo funciona en local (demo).', style: TextStyle(color: AppColors.textMedium, fontSize: 13))),
-                        ElevatedButton.icon(onPressed: () => _openEditor(context, null), icon: const Icon(Icons.add_rounded, size: 18), label: const Text('Agregar')),
+                        Expanded(child: Text(tr('ap_sub'), style: const TextStyle(color: AppColors.textMedium, fontSize: 13))),
+                        ElevatedButton.icon(onPressed: () => _openEditor(context, null), icon: const Icon(Icons.add_rounded, size: 18), label: Text(tr('add'))),
                       ],
                     ),
                   ),
@@ -37,14 +38,14 @@ class AppliancesScreen extends StatelessWidget {
                   builder: (_, _) {
                     final items = AppliancesStore.instance.items;
                     if (items.isEmpty) {
-                      return const Card(
+                      return Card(
                         child: Padding(
-                          padding: EdgeInsets.all(28),
+                          padding: const EdgeInsets.all(28),
                           child: Column(children: [
-                            Icon(Icons.kitchen_outlined, size: 40, color: AppColors.textMedium),
-                            SizedBox(height: 8),
-                            Text('Sin equipos aún', style: TextStyle(fontWeight: FontWeight.w800)),
-                            Text('Toca Agregar para crear el primero.', style: TextStyle(color: AppColors.textMedium, fontSize: 13)),
+                            const Icon(Icons.kitchen_outlined, size: 40, color: AppColors.textMedium),
+                            const SizedBox(height: 8),
+                            Text(tr('no_equipment'), style: const TextStyle(fontWeight: FontWeight.w800)),
+                            Text(tr('no_equipment_hint'), style: const TextStyle(color: AppColors.textMedium, fontSize: 13)),
                           ]),
                         ),
                       );
@@ -55,13 +56,13 @@ class AppliancesScreen extends StatelessWidget {
                           child: ListTile(
                             leading: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.08), shape: BoxShape.circle), child: const Icon(Icons.bolt_outlined, color: AppColors.primary)),
                             title: Text('${it.name} x${it.quantity}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                            subtitle: Text('${it.powerW.toStringAsFixed(0)}W • ${it.hoursPerDay}h/día\n${it.kwhMonth.toStringAsFixed(1)} kWh/mes', style: const TextStyle(fontSize: 12)),
+                            subtitle: Text('${it.powerW.toStringAsFixed(0)}W • ${it.hoursPerDay}${tr('fld_hours_short')}\n${it.kwhMonth.toStringAsFixed(1)} ${tr('kwh_month')}', style: const TextStyle(fontSize: 12)),
                             isThreeLine: true,
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                IconButton(tooltip: 'Editar', icon: const Icon(Icons.edit_outlined, size: 20), onPressed: () => _openEditor(context, it)),
-                                IconButton(tooltip: 'Eliminar', icon: const Icon(Icons.delete_outline_rounded, size: 20, color: AppColors.error), onPressed: () => _confirmDelete(context, it.id)),
+                                IconButton(tooltip: tr('edit'), icon: const Icon(Icons.edit_outlined, size: 20), onPressed: () => _openEditor(context, it)),
+                                IconButton(tooltip: tr('delete'), icon: const Icon(Icons.delete_outline_rounded, size: 20, color: AppColors.error), onPressed: () => _confirmDelete(context, it.id)),
                               ],
                             ),
                           ),
@@ -73,7 +74,7 @@ class AppliancesScreen extends StatelessWidget {
                           child: Row(children: [
                             const Icon(Icons.calculate_outlined, color: AppColors.primary),
                             const SizedBox(width: 8),
-                            Text('Total estimado: ${_total(items).toStringAsFixed(1)} kWh/mes', style: const TextStyle(fontWeight: FontWeight.w800)),
+                            Text('${tr('total_est')}: ${_total(items).toStringAsFixed(1)} ${tr('kwh_month')}', style: const TextStyle(fontWeight: FontWeight.w800)),
                           ]),
                         ),
                       ),
@@ -91,7 +92,7 @@ class AppliancesScreen extends StatelessWidget {
   static double _total(List<ApplianceItemData> items) => items.fold(0, (a, e) => a + e.kwhMonth);
 
   static Future<void> _confirmDelete(BuildContext context, String id) async {
-    final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(title: const Text('Eliminar'), content: const Text('¿Eliminar este equipo?'), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')), ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white), onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar'))]));
+    final ok = await showDialog<bool>(context: context, builder: (_) => AlertDialog(title: Text(tr('delete_title')), content: Text(tr('delete_sub')), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('cancel'))), ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white), onPressed: () => Navigator.pop(context, true), child: Text(tr('delete')))]));
     if (ok == true) AppliancesStore.instance.remove(id);
   }
 
@@ -125,7 +126,7 @@ class _ApplianceDialogState extends State<_ApplianceDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.existing == null ? 'Agregar equipo' : 'Editar equipo'),
+      title: Text(widget.existing == null ? tr('add_title') : tr('edit_title')),
       content: SizedBox(
         width: 380,
         child: Form(
@@ -134,16 +135,16 @@ class _ApplianceDialogState extends State<_ApplianceDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SolarTextField(controller: _name, label: 'Nombre', hint: 'Ej: Nevera', prefix: Icons.kitchen_outlined, validator: (v) => v == null || v.trim().isEmpty ? 'Requerido' : null),
+                SolarTextField(controller: _name, label: tr('fld_name'), hint: tr('fld_name_hint'), prefix: Icons.kitchen_outlined, validator: (v) => v == null || v.trim().isEmpty ? tr('v_required') : null),
                 const SizedBox(height: 10),
                 Row(children: [
-                  Expanded(child: SolarTextField(controller: _power, label: 'Potencia (W)', hint: 'Ej: 350', prefix: Icons.bolt_outlined, keyboardType: TextInputType.number, validator: (v) => _num(v, 'W'))),
+                  Expanded(child: SolarTextField(controller: _power, label: tr('fld_power'), hint: tr('fld_power_hint'), prefix: Icons.bolt_outlined, keyboardType: TextInputType.number, validator: (v) => _num(v))),
                   const SizedBox(width: 10),
-                  Expanded(child: SolarTextField(controller: _hours, label: 'Horas/día', hint: 'Ej: 8', prefix: Icons.schedule_outlined, keyboardType: const TextInputType.numberWithOptions(decimal: true), validator: (v) => _hoursV(v))),
+                  Expanded(child: SolarTextField(controller: _hours, label: tr('fld_hours'), hint: tr('fld_hours_hint'), prefix: Icons.schedule_outlined, keyboardType: const TextInputType.numberWithOptions(decimal: true), validator: (v) => _hoursV(v))),
                 ]),
                 const SizedBox(height: 10),
                 Row(children: [
-                  const Text('Cantidad:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                  Text(tr('qty'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                   const SizedBox(width: 8),
                   IconButton(onPressed: () => setState(() => _qty = (_qty - 1).clamp(1, 20)), icon: const Icon(Icons.remove_circle_outline)),
                   Text('$_qty', style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -155,7 +156,7 @@ class _ApplianceDialogState extends State<_ApplianceDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
         ElevatedButton(
           onPressed: () {
             if (!(_form.currentState?.validate() ?? false)) return;
@@ -168,33 +169,33 @@ class _ApplianceDialogState extends State<_ApplianceDialog> {
             );
             if (widget.existing == null) {
               AppliancesStore.instance.add(data);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Equipo agregado (demo local)')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('added'))));
             } else {
               AppliancesStore.instance.update(widget.existing!.id, data);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Equipo actualizado')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('updated'))));
             }
             Navigator.pop(context);
           },
-          child: Text(widget.existing == null ? 'Agregar' : 'Guardar'),
+          child: Text(widget.existing == null ? tr('add') : tr('save')),
         ),
       ],
     );
   }
 
-  String? _num(String? v, String unit) {
-    if (v == null || v.trim().isEmpty) return 'Requerido';
+  String? _num(String? v) {
+    if (v == null || v.trim().isEmpty) return tr('v_required');
     final n = double.tryParse(v.replaceAll(',', '.'));
-    if (n == null) return 'Solo números';
-    if (n <= 0) return '> 0 $unit';
-    if (n > 10000) return 'Muy alto';
+    if (n == null) return tr('e_num');
+    if (n <= 0) return tr('e_positive');
+    if (n > 10000) return tr('e_too_high');
     return null;
   }
 
   String? _hoursV(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Requerido';
+    if (v == null || v.trim().isEmpty) return tr('v_required');
     final n = double.tryParse(v.replaceAll(',', '.'));
-    if (n == null) return 'Solo números';
-    if (n < 0 || n > 24) return '0 - 24 h';
+    if (n == null) return tr('e_num');
+    if (n < 0 || n > 24) return tr('e_hours');
     return null;
   }
 }

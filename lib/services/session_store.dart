@@ -26,6 +26,14 @@ class SessionStore {
     return (token == null || token.isEmpty) ? null : token;
   }
 
+  /// Actualiza solo nombre/email (p. ej. tras PUT /users/me).
+  static Future<void> updateUser(AuthUser user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kId, '${user.id}');
+    await prefs.setString(_kNombre, user.nombre);
+    await prefs.setString(_kEmail, user.email);
+  }
+
   static Future<AuthUser?> readUser() async {
     final prefs = await SharedPreferences.getInstance();
     final email = prefs.getString(_kEmail);

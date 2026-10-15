@@ -10,14 +10,15 @@ class SolarLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = light ? Colors.white : AppColors.primaryDark;
+    final autoLight = light || context.isDark;
+    final textColor = autoLight ? Colors.white : AppColors.primaryDark;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Stack(
           clipBehavior: Clip.none,
           children: [
-            Icon(Icons.solar_power_rounded, size: iconSize, color: light ? Colors.white : AppColors.primary),
+            Icon(Icons.solar_power_rounded, size: iconSize, color: autoLight ? Colors.white : AppColors.primary),
             Positioned(
               top: -6,
               right: -4,
@@ -31,7 +32,7 @@ class SolarLogo extends StatelessWidget {
             style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w900, color: textColor, letterSpacing: -0.5),
             children: [
               const TextSpan(text: 'Solar'),
-              TextSpan(text: 'O', style: TextStyle(color: light ? AppColors.accent : AppColors.accentDark)),
+              TextSpan(text: 'O', style: TextStyle(color: autoLight ? AppColors.accent : AppColors.accentDark)),
             ],
           ),
         ),

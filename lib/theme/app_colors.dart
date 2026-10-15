@@ -29,6 +29,15 @@ class AppColors {
   static const Color textLight = Color(0xFFB9C4E8);
   static const Color textOnBlue = Colors.white;
 
+  // Paleta modo oscuro (noche solar: fondo navy + superficies elevadas + amarillo)
+  static const Color bgDark = Color(0xFF0A1230);
+  static const Color surfaceDark = Color(0xFF151D45);
+  static const Color surfaceDark2 = Color(0xFF1C2656);
+  static const Color borderDark = Color(0xFF2C3770);
+  static const Color textWhite = Color(0xFFF2F5FF);
+  static const Color mutedDark = Color(0xFFA3AEDB);
+  static const Color primaryBright = Color(0xFF7C96FF);
+
   // Estados
   static const Color success = Color(0xFF22C55E);
   static const Color error = Color(0xFFE5484D);
@@ -53,4 +62,15 @@ class AppColors {
     end: Alignment.bottomCenter,
     colors: [Color(0xFFFFD54D), accent],
   );
+}
+
+/// Atajos según brillo actual. Úsalos en vez de colores fijos claros
+/// para que todo se lea bien en modo claro Y oscuro.
+extension DarkX on BuildContext {
+  bool get isDark => Theme.of(this).brightness == Brightness.dark;
+  Color get tDark => isDark ? AppColors.textWhite : AppColors.textDark;
+  Color get tMed => isDark ? AppColors.mutedDark : AppColors.textMedium;
+  Color get cardBg => isDark ? AppColors.surfaceDark : Colors.white;
+  Color get border => isDark ? AppColors.borderDark : AppColors.divider;
+  Color get inputBg => isDark ? AppColors.surfaceDark2 : Colors.white;
 }

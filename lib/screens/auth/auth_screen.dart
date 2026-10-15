@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/lang.dart';
 import '../../theme/responsive.dart';
+import '../../widgets/lang_switcher.dart';
 import '../../widgets/skeletons.dart';
 import '../../widgets/solar_logo.dart';
 import '../../widgets/solar_text_field.dart';
@@ -79,7 +81,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       if (!mounted) return;
       _email.text = _regEmail.text.trim().toLowerCase();
       _tab.animateTo(0);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usuario creado. Ahora inicia sesión.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('reg_ok'))));
     } on AuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
@@ -88,31 +90,61 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     }
   }
 
+  /// Recuperación real contra POST /auth/forgot-password.
   void _forgot() {
+    final messenger = ScaffoldMessenger.of(context);
+    final emailCtrl = TextEditingController(text: _email.text);
+    final formKey = GlobalKey<FormState>();
+    bool sending = false;
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Recuperar contraseña'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Te enviaremos un enlace (simulado).', style: TextStyle(fontSize: 13)),
-            const SizedBox(height: 12),
-            TextFormField(controller: _email, decoration: const InputDecoration(hintText: 'correo@ejemplo.com', prefixIcon: Icon(Icons.email_outlined)), validator: SolarValidators.email, autovalidateMode: AutovalidateMode.onUserInteraction),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          title: Text(tr('forgot_title')),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(tr('forgot_sub'), style: const TextStyle(fontSize: 13)),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(hintText: 'correo@ejemplo.com', prefixIcon: Icon(Icons.email_outlined)),
+                  validator: SolarValidators.email,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: sending ? null : () => Navigator.pop(ctx), child: Text(tr('cancel'))),
+            ElevatedButton(
+              onPressed: sending
+                  ? null
+                  : () async {
+                      if (!(formKey.currentState?.validate() ?? false)) return;
+                      setDlg(() => sending = true);
+                      try {
+                        final msg = await AuthService().forgotPassword(email: emailCtrl.text);
+                        if (!ctx.mounted || !mounted) return;
+                        Navigator.pop(ctx);
+                        messenger.showSnackBar(SnackBar(content: Text(msg)));
+                      } on AuthException catch (e) {
+                        if (!ctx.mounted || !mounted) return;
+                        setDlg(() => sending = false);
+                        messenger.showSnackBar(SnackBar(content: Text(e.message)));
+                      }
+                    },
+              child: sending
+                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2.5))
+                  : Text(tr('send')),
+            ),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enlace enviado (simulado). Revisa tu correo.')));
-            },
-            child: const Text('Enviar'),
-          ),
-        ],
       ),
-    );
+    ).then((_) => emailCtrl.dispose());
   }
 
   @override
@@ -148,9 +180,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
                 child: Column(
                   children: [
-                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    Row(children: [
                       const SolarLogo(light: true, fontSize: 26),
-                      IconButton(tooltip: 'Ayuda', onPressed: () {}, icon: const Icon(Icons.person_add_alt_outlined, color: Colors.white)),
+                      const Spacer(),
+                      const LangSwitcher(dark: true),
+                      IconButton(tooltip: tr('help'), onPressed: () {}, icon: const Icon(Icons.person_add_alt_outlined, color: Colors.white)),
                     ]),
                     const SizedBox(height: 8),
                     TabBar(
@@ -160,7 +194,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       labelColor: Colors.white,
                       unselectedLabelColor: Colors.white60,
                       labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                      tabs: const [Tab(text: 'Iniciar sesión'), Tab(text: 'Registro de Usuario')],
+                      tabs: [Tab(text: tr('login_tab')), Tab(text: tr('reg_title'))],
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -182,7 +216,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   // ---------- DESKTOP: split ----------
   Widget _desktop() {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -203,14 +237,14 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         padding: const EdgeInsets.all(32),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            SolarLogo(light: true, fontSize: 28),
-                            SizedBox(height: 24),
-                            Text('Ahorra y utiliza\nenergías limpias.', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900, height: 1.15)),
-                            SizedBox(height: 12),
-                            Text('Monitorea tu consumo, aprende y simula tu sistema solar.', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                            Spacer(),
-                            _DesktopBullets(),
+                          children: [
+                            const SolarLogo(light: true, fontSize: 28),
+                            const SizedBox(height: 24),
+                            Text(tr('hero_title'), style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900, height: 1.15)),
+                            const SizedBox(height: 12),
+                            Text(tr('hero_sub'), style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                            const Spacer(),
+                            const _DesktopBullets(),
                           ],
                         ),
                       ),
@@ -222,7 +256,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         padding: const EdgeInsets.all(28),
                         child: Column(
                           children: [
-                            TabBar(controller: _tab, labelColor: AppColors.primaryDark, unselectedLabelColor: AppColors.textMedium, indicatorColor: AppColors.accent, labelStyle: const TextStyle(fontWeight: FontWeight.w800), tabs: const [Tab(text: 'Iniciar sesión'), Tab(text: 'Registro')]),
+                            const Align(alignment: Alignment.centerRight, child: LangSwitcher()),
+                            TabBar(controller: _tab, labelColor: context.tDark, unselectedLabelColor: context.tMed, indicatorColor: AppColors.accent, labelStyle: const TextStyle(fontWeight: FontWeight.w800), tabs: [Tab(text: tr('login_tab')), Tab(text: tr('register_tab'))]),
                             const SizedBox(height: 16),
                             Expanded(child: _boot ? const AuthFormSkeleton() : TabBarView(controller: _tab, children: [_loginForm(dark: false), _registerForm(dark: false)])),
                           ],
@@ -241,28 +276,28 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
   // ---------- Formularios ----------
   Widget _loginForm({required bool dark}) {
-    final sub = dark ? Colors.white70 : AppColors.textMedium;
+    final sub = dark ? Colors.white70 : context.tMed;
     return Form(
       key: _loginKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Bienvenido de nuevo', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: dark ? Colors.white : AppColors.textDark)),
-          Text('Ingresa para ver tu consumo y ahorro.', style: TextStyle(color: sub, fontSize: 13)),
+          Text(tr('login_title'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: dark ? Colors.white : context.tDark)),
+          Text(tr('login_sub'), style: TextStyle(color: sub, fontSize: 13)),
           const SizedBox(height: 16),
-          SolarTextField(controller: _email, label: 'Correo / usuario', hint: 'usuario@correo.com', prefix: Icons.email_outlined, keyboardType: TextInputType.emailAddress, validator: SolarValidators.email, dark: dark),
+          SolarTextField(controller: _email, label: tr('email_label'), hint: tr('email_hint'), prefix: Icons.email_outlined, keyboardType: TextInputType.emailAddress, validator: SolarValidators.email, dark: dark),
           const SizedBox(height: 12),
-          SolarTextField(controller: _pass, label: 'Contraseña', hint: '••••••••', prefix: Icons.lock_outline_rounded, obscure: true, validator: SolarValidators.password, dark: dark),
+          SolarTextField(controller: _pass, label: tr('pass_label'), hint: tr('pass_hint_login'), prefix: Icons.lock_outline_rounded, obscure: true, textInputAction: TextInputAction.done, validator: SolarValidators.registerPassword, onSubmitted: (_) => _mockLogin(), dark: dark),
           Align(
             alignment: Alignment.centerRight,
-            child: SolarLinkButton(label: '¿Olvidaste tu contraseña? Recuperar', onPressed: _forgot, color: dark ? AppColors.accent : null),
+            child: SolarLinkButton(label: tr('forgot_link'), onPressed: _forgot, color: dark ? AppColors.accent : null),
           ),
           const SizedBox(height: 8),
-          SolarPrimaryButton(label: 'Iniciar sesión', icon: Icons.login_rounded, loading: _loading, onPressed: _mockLogin),
+          SolarPrimaryButton(label: tr('login_btn'), icon: Icons.login_rounded, loading: _loading, onPressed: _mockLogin),
           const SizedBox(height: 12),
           Wrap(alignment: WrapAlignment.center, crossAxisAlignment: WrapCrossAlignment.center, children: [
-            Text('¿No tienes cuenta?', style: TextStyle(color: sub, fontSize: 13)),
-            SolarLinkButton(label: 'Regístrate aquí', onPressed: () => _tab.animateTo(1), color: dark ? AppColors.accent : null),
+            Text(tr('no_account'), style: TextStyle(color: sub, fontSize: 13)),
+            SolarLinkButton(label: tr('register_link'), onPressed: () => _tab.animateTo(1), color: dark ? AppColors.accent : null),
           ]),
         ],
       ),
@@ -270,27 +305,27 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   }
 
   Widget _registerForm({required bool dark}) {
-    final sub = dark ? Colors.white70 : AppColors.textMedium;
+    final sub = dark ? Colors.white70 : context.tMed;
     return Form(
       key: _regKey,
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Registro de Usuario', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: dark ? Colors.white : AppColors.textDark)),
-            Text('Este es el primer paso para empezar a ahorrar y utilizar energías limpias.', style: TextStyle(color: sub, fontSize: 13)),
+            Text(tr('reg_title'), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: dark ? Colors.white : context.tDark)),
+            Text(tr('reg_sub'), style: TextStyle(color: sub, fontSize: 13)),
             const SizedBox(height: 16),
-            SolarTextField(controller: _name, label: 'Nombre completo', hint: 'Ingresa tu nombre completo', prefix: Icons.person_outline_rounded, validator: SolarValidators.personName, dark: dark),
+            SolarTextField(controller: _name, label: tr('name_label'), hint: tr('name_hint'), prefix: Icons.person_outline_rounded, validator: SolarValidators.personName, dark: dark),
             const SizedBox(height: 12),
-            SolarTextField(controller: _regEmail, label: 'Correo electrónico', hint: 'usuario@correo.com', prefix: Icons.email_outlined, keyboardType: TextInputType.emailAddress, validator: SolarValidators.email, dark: dark),
+            SolarTextField(controller: _regEmail, label: tr('reg_email_label'), hint: tr('email_hint'), prefix: Icons.email_outlined, keyboardType: TextInputType.emailAddress, validator: SolarValidators.email, dark: dark),
             const SizedBox(height: 12),
-            SolarTextField(controller: _regPass, label: 'Contraseña', hint: '8+, mayúscula, minúscula y número', prefix: Icons.lock_outline_rounded, obscure: true, validator: SolarValidators.registerPassword, dark: dark),
+            SolarTextField(controller: _regPass, label: tr('pass_label'), hint: tr('reg_pass_hint'), prefix: Icons.lock_outline_rounded, obscure: true, textInputAction: TextInputAction.done, validator: SolarValidators.registerPassword, onSubmitted: (_) => _mockRegister(), dark: dark),
             const SizedBox(height: 12),
-            SolarPrimaryButton(label: 'Registrarme', icon: Icons.person_add_alt_rounded, loading: _loading, onPressed: _mockRegister),
+            SolarPrimaryButton(label: tr('register_btn'), icon: Icons.person_add_alt_rounded, loading: _loading, onPressed: _mockRegister),
             const SizedBox(height: 8),
             Wrap(alignment: WrapAlignment.center, crossAxisAlignment: WrapCrossAlignment.center, children: [
-              Text('¿Ya tienes una cuenta?', style: TextStyle(color: sub, fontSize: 13)),
-              SolarLinkButton(label: 'Inicia sesión aquí', onPressed: () => _tab.animateTo(0), color: dark ? AppColors.accent : null),
+              Text(tr('have_account'), style: TextStyle(color: sub, fontSize: 13)),
+              SolarLinkButton(label: tr('login_here'), onPressed: () => _tab.animateTo(0), color: dark ? AppColors.accent : null),
             ]),
           ],
         ),
@@ -303,7 +338,7 @@ class _DesktopBullets extends StatelessWidget {
   const _DesktopBullets();
   @override
   Widget build(BuildContext context) {
-    const items = ['Dashboard de consumo mensual', 'Catálogo de electrodomésticos', 'Módulos educativos + simulador'];
+    final items = [tr('feat_dashboard'), tr('feat_catalog'), tr('feat_modules')];
     return Column(
       children: [
         for (final t in items)

@@ -25,7 +25,8 @@ class ApplianceItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sub = dark ? Colors.white70 : AppColors.textMedium;
+    final dd = dark || context.isDark;
+    final sub = dd ? Colors.white70 : AppColors.textMedium;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -34,12 +35,12 @@ class ApplianceItem extends StatelessWidget {
           height: 56,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: dark ? Colors.white.withValues(alpha: 0.12) : item.color.withValues(alpha: 0.12),
+            color: dd ? Colors.white.withValues(alpha: 0.12) : item.color.withValues(alpha: 0.12),
           ),
-          child: Icon(item.icon, color: dark ? Colors.white : item.color, size: 26),
+          child: Icon(item.icon, color: dd ? Colors.white : item.color, size: 26),
         ),
         const SizedBox(height: 6),
-        Text(item.name, textAlign: TextAlign.center, maxLines: 2, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: dark ? Colors.white : AppColors.textDark)),
+        Text(item.name, textAlign: TextAlign.center, maxLines: 2, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: dd ? Colors.white : AppColors.textDark)),
         Text(item.kwh, style: TextStyle(fontSize: 10, color: sub)),
       ],
     );
@@ -91,9 +92,10 @@ class SolarOutlineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.isDark;
     return Material(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: AppColors.divider)),
+      color: isDark ? AppColors.surfaceDark : Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: isDark ? AppColors.borderDark : AppColors.divider)),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
@@ -102,10 +104,10 @@ class SolarOutlineCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Row(
             children: [
-              Icon(icon, color: AppColors.primary),
+              Icon(icon, color: isDark ? AppColors.primaryBright : AppColors.primary),
               const SizedBox(width: 12),
-              Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.primaryDark))),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.textMedium),
+              Expanded(child: Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: isDark ? Colors.white : AppColors.primaryDark))),
+              Icon(Icons.chevron_right_rounded, color: isDark ? AppColors.mutedDark : AppColors.textMedium),
             ],
           ),
         ),

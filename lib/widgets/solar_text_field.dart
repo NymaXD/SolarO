@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/lang.dart';
 
 /// Input con estados visuales claros: focus amarillo, error rojo + icono, show/hide password.
+/// Soporta Enter para enviar (`onSubmitted` + `textInputAction`).
 class SolarTextField extends StatefulWidget {
   final TextEditingController controller;
   final String label;
@@ -9,8 +11,10 @@ class SolarTextField extends StatefulWidget {
   final IconData prefix;
   final bool obscure;
   final TextInputType keyboardType;
+  final TextInputAction textInputAction;
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
+  final void Function(String)? onSubmitted;
   final bool dark; // true = sobre fondo azul (texto blanco)
 
   const SolarTextField({
@@ -21,8 +25,10 @@ class SolarTextField extends StatefulWidget {
     required this.prefix,
     this.obscure = false,
     this.keyboardType = TextInputType.text,
+    this.textInputAction = TextInputAction.next,
     this.validator,
     this.onChanged,
+    this.onSubmitted,
     this.dark = false,
   });
 
@@ -35,17 +41,19 @@ class _SolarTextFieldState extends State<SolarTextField> {
 
   @override
   Widget build(BuildContext context) {
+    // En modo oscuro los campos son oscuros aunque no estén sobre fondo azul.
+    final dd = widget.dark || context.isDark;
     final labelStyle = TextStyle(
       fontSize: 13,
       fontWeight: FontWeight.w700,
-      color: widget.dark ? Colors.white : AppColors.textDark,
+      color: dd ? Colors.white : AppColors.textDark,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(widget.prefix, size: 16, color: widget.dark ? AppColors.accent : AppColors.primary),
+            Icon(widget.prefix, size: 16, color: dd ? AppColors.accent : AppColors.primary),
             const SizedBox(width: 6),
             Text(widget.label, style: labelStyle),
           ],
@@ -55,18 +63,22 @@ class _SolarTextFieldState extends State<SolarTextField> {
           controller: widget.controller,
           obscureText: _hidden,
           keyboardType: widget.keyboardType,
+          textInputAction: widget.textInputAction,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           validator: widget.validator,
           onChanged: widget.onChanged,
-          style: TextStyle(color: widget.dark ? Colors.white : AppColors.textDark, fontSize: 14),
+          onFieldSubmitted: widget.onSubmitted,
+          style: TextStyle(color: dd ? Colors.white : AppColors.textDark, fontSize: 14),
           decoration: InputDecoration(
             hintText: widget.hint,
             filled: true,
-            fillColor: widget.dark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
-            hintStyle: TextStyle(color: widget.dark ? Colors.white54 : const Color(0xFF93A0C4), fontSize: 13.5),
+            fillColor: widget.dark
+                ? Colors.white.withValues(alpha: 0.08)
+                : (context.isDark ? AppColors.surfaceDark2 : Colors.white),
+            hintStyle: TextStyle(color: dd ? Colors.white54 : const Color(0xFF93A0C4), fontSize: 13.5),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: widget.dark ? Colors.white30 : AppColors.divider),
+              borderSide: BorderSide(color: dd ? (widget.dark ? Colors.white30 : AppColors.borderDark) : AppColors.divider),
             ),
             focusedBorder: const OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(10)),
@@ -80,11 +92,11 @@ class _SolarTextFieldState extends State<SolarTextField> {
               borderRadius: BorderRadius.all(Radius.circular(10)),
               borderSide: BorderSide(color: AppColors.error, width: 2),
             ),
-            errorStyle: TextStyle(color: widget.dark ? const Color(0xFFFF9AA0) : AppColors.error, fontSize: 12),
-            prefixIcon: Icon(widget.prefix, size: 20, color: widget.dark ? Colors.white70 : null),
+            errorStyle: TextStyle(color: dd ? const Color(0xFFFF9AA0) : AppColors.error, fontSize: 12),
+            prefixIcon: Icon(widget.prefix, size: 20, color: dd ? (widget.dark ? Colors.white70 : AppColors.mutedDark) : null),
             suffixIcon: widget.obscure
                 ? IconButton(
-                    tooltip: _hidden ? 'Mostrar' : 'Ocultar',
+                    tooltip: _hidden ? tr('show') : tr('hide'),
                     onPressed: () => setState(() => _hidden = !_hidden),
                     icon: Icon(_hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20),
                   )
@@ -96,49 +108,49 @@ class _SolarTextFieldState extends State<SolarTextField> {
   }
 }
 
-/// Validadores compartidos (solo frontend).
+/// Validadores compartidos (mensajes según idioma).
 class SolarValidators {
   static String? email(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Ingresa tu correo';
+    if (v == null || v.trim().isEmpty) return tr('v_email_empty');
     final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim());
-    if (!ok) return 'Correo no válido (ej: usuario@correo.com)';
+    if (!ok) return tr('v_email_bad');
     return null;
   }
 
   static String? password(String? v) {
-    if (v == null || v.isEmpty) return 'Ingresa tu contraseña';
-    if (v.length < 6) return 'Mínimo 6 caracteres';
+    if (v == null || v.isEmpty) return tr('v_pass_empty');
+    if (v.length < 6) return tr('v_pass_short');
     return null;
   }
 
   /// Política del backend (POST /auth/register): 8+, mayúscula, minúscula y número.
   static String? registerPassword(String? v) {
-    if (v == null || v.isEmpty) return 'Crea una contraseña';
-    if (v.length < 8) return 'Mínimo 8 caracteres';
-    if (!RegExp(r'[A-Z]').hasMatch(v)) return 'Incluye una mayúscula';
-    if (!RegExp(r'[a-z]').hasMatch(v)) return 'Incluye una minúscula';
-    if (!RegExp(r'[0-9]').hasMatch(v)) return 'Incluye un número';
+    if (v == null || v.isEmpty) return tr('v_pass_empty');
+    if (v.length < 8) return tr('v_pass_short');
+    if (!RegExp(r'[A-Z]').hasMatch(v)) return tr('v_pass_upper');
+    if (!RegExp(r'[a-z]').hasMatch(v)) return tr('v_pass_lower');
+    if (!RegExp(r'[0-9]').hasMatch(v)) return tr('v_pass_digit');
     return null;
   }
 
   static String? personName(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Ingresa tu nombre';
-    if (v.trim().length < 3) return 'Mínimo 3 caracteres';
-    if (v.trim().isNotEmpty && double.tryParse(v.trim()) != null) return 'Nombre inválido';
+    if (v == null || v.trim().isEmpty) return tr('v_name_empty');
+    if (v.trim().length < 3) return tr('v_name_short');
+    if (v.trim().isNotEmpty && double.tryParse(v.trim()) != null) return tr('v_name_bad');
     return null;
   }
 
-  static String? required(String? v, [String msg = 'Campo requerido']) {
-    if (v == null || v.trim().isEmpty) return msg;
+  static String? required(String? v, [String? msg]) {
+    if (v == null || v.trim().isEmpty) return msg ?? tr('v_required');
     return null;
   }
 
   static String? kwh(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Ingresa el consumo';
+    if (v == null || v.trim().isEmpty) return tr('v_kwh_empty');
     final n = double.tryParse(v.replaceAll(',', '.'));
-    if (n == null) return 'Solo números (ej: 15)';
-    if (n <= 0) return 'Debe ser mayor a 0';
-    if (n > 2000) return 'Valor muy alto, verifícalo';
+    if (n == null) return tr('e_num');
+    if (n <= 0) return tr('e_positive');
+    if (n > 2000) return tr('e_too_high');
     return null;
   }
 }

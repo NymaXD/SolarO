@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/lang.dart';
 
 class SolarNotification {
   final String title;
@@ -10,7 +11,8 @@ class SolarNotification {
   SolarNotification({required this.title, required this.body, required this.time, required this.icon, this.read = false});
 }
 
-/// Panel tipo YouTube: dropdown con lista, no leídos con punto azul, "marcar leídas".
+/// Panel tipo YouTube: dropdown con lista y "marcar leídas".
+/// Empieza vacío; TODO-BACKEND: llenar con GET /notifications.
 class NotificationsPanel extends StatefulWidget {
   const NotificationsPanel({super.key});
   @override
@@ -38,17 +40,13 @@ class NotificationsPanel extends StatefulWidget {
 }
 
 class _NotificationsPanelState extends State<NotificationsPanel> {
-  final List<SolarNotification> _items = [
-    SolarNotification(title: 'Nuevo módulo disponible', body: 'Fundamentos de energía solar ya está listo para ti.', time: 'hace 2 h', icon: Icons.school_outlined),
-    SolarNotification(title: 'Recuerda registrar tu consumo', body: 'Aún no tienes registros de este mes.', time: 'hace 1 d', icon: Icons.bolt_outlined),
-    SolarNotification(title: 'Consejo de ahorro', body: 'Apaga el aire 1h y ahorra ~18 kWh/mes.', time: 'hace 3 d', icon: Icons.lightbulb_outline_rounded, read: true),
-  ];
+  final List<SolarNotification> _items = [];
 
   @override
   Widget build(BuildContext context) {
     final unread = _items.where((e) => !e.read).length;
     return Material(
-      color: Colors.white,
+      color: context.cardBg,
       borderRadius: BorderRadius.circular(16),
       elevation: 8,
       child: ConstrainedBox(
@@ -60,23 +58,39 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
               padding: const EdgeInsets.fromLTRB(16, 14, 8, 8),
               child: Row(
                 children: [
-                  Text('Notificaciones${unread > 0 ? ' ($unread)' : ''}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                  Text(tr('notifs_title') + (unread > 0 ? ' ($unread)' : ''), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: context.tDark)),
                   const Spacer(),
-                  TextButton(
+                  if (_items.isNotEmpty)
+                    TextButton(
                       onPressed: () => setState(() {
                         for (final e in _items) {
                           e.read = true;
                         }
                       }),
-                      child: const Text('Marcar leídas', style: TextStyle(fontSize: 12))),
-                  IconButton(tooltip: 'Cerrar', onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, size: 20)),
+                      child: Text(tr('mark_read'), style: const TextStyle(fontSize: 12)),
+                    ),
+                  IconButton(tooltip: tr('close'), onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, size: 20)),
                 ],
               ),
             ),
             const Divider(height: 1),
             Flexible(
               child: _items.isEmpty
-                  ? const Padding(padding: EdgeInsets.all(24), child: Text('Sin notificaciones', style: TextStyle(color: AppColors.textMedium)))
+                  ? Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.primary.withValues(alpha: 0.08)),
+                            child: const Icon(Icons.notifications_none_rounded, size: 30, color: AppColors.primary),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(tr('no_notifs'), style: TextStyle(fontWeight: FontWeight.w700, color: context.tMed)),
+                        ],
+                      ),
+                    )
                   : ListView.separated(
                       shrinkWrap: true,
                       itemCount: _items.length,
@@ -97,11 +111,6 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
                         );
                       },
                     ),
-            ),
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Text('Demo local. Con backend llegarán por GET /notifications.', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
             ),
           ],
         ),

@@ -4,13 +4,15 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
+import '../theme/lang.dart';
 import 'api_config.dart';
 
 /// Error de autenticación con mensaje listo para mostrar en UI.
 /// El mensaje viene del backend (`message`) o es de conectividad.
 class AuthException implements Exception {
   final String message;
-  const AuthException(this.message);
+  final int statusCode; // 0 = error de red/timeout (sin respuesta HTTP)
+  const AuthException(this.message, [this.statusCode = 0]);
   @override
   String toString() => 'AuthException: $message';
 }
@@ -61,11 +63,11 @@ class AuthService {
           )
           .timeout(ApiConfig.timeout);
     } on TimeoutException {
-      throw const AuthException('El servidor tardó demasiado. Verifica tu conexión.');
+      throw AuthException(tr('err_timeout'));
     } on SocketException {
-      throw AuthException('No se pudo conectar con ${ApiConfig.baseUrl}. ¿El backend está corriendo?');
+      throw AuthException(tr('err_noconn'));
     } on http.ClientException {
-      throw AuthException('Error de red al contactar ${ApiConfig.baseUrl}.');
+      throw AuthException(tr('err_network'));
     }
 
     if (res.statusCode == 200) {
@@ -73,7 +75,7 @@ class AuthService {
       final token = body['access_token'] as String?;
       final userJson = body['user'] as Map<String, dynamic>?;
       if (token == null || token.isEmpty || userJson == null) {
-        throw const AuthException('Respuesta inesperada del servidor.');
+        throw AuthException(tr('err_unexpected'));
       }
       return AuthSession(accessToken: token, user: AuthUser.fromJson(userJson));
     }
@@ -100,16 +102,79 @@ class AuthService {
           )
           .timeout(ApiConfig.timeout);
     } on TimeoutException {
-      throw const AuthException('El servidor tardó demasiado. Verifica tu conexión.');
+      throw AuthException(tr('err_timeout'));
     } on SocketException {
-      throw AuthException('No se pudo conectar con ${ApiConfig.baseUrl}. ¿El backend está corriendo?');
+      throw AuthException(tr('err_noconn'));
     } on http.ClientException {
-      throw AuthException('Error de red al contactar ${ApiConfig.baseUrl}.');
+      throw AuthException(tr('err_network'));
     }
 
     if (res.statusCode == 201) return;
     // 400/409/422/500: mostrar el "message" del backend tal cual.
     throw AuthException(_backendMessage(res.body));
+  }
+
+  /// Recuperación real contra POST /auth/forgot-password.
+  /// El backend responde 200 siempre con un mensaje genérico (no revela
+  /// si el correo existe). Devuelve ese mensaje para mostrarlo.
+  Future<String> forgotPassword({required String email}) async {
+    late http.Response res;
+    try {
+      res = await _client
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/auth/forgot-password'),
+            headers: const {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email.trim().toLowerCase()}),
+          )
+          .timeout(ApiConfig.timeout);
+    } on TimeoutException {
+      throw AuthException(tr('err_timeout'));
+    } on SocketException {
+      throw AuthException(tr('err_noconn'));
+    } on http.ClientException {
+      throw AuthException(tr('err_network'));
+    }
+
+    if (res.statusCode == 200) {
+      try {
+        final body = jsonDecode(res.body) as Map<String, dynamic>;
+        final msg = body['message'] as String?;
+        if (msg != null && msg.trim().isNotEmpty) return msg;
+      } catch (_) {}
+      return tr('forgot_generic');
+    }
+    throw AuthException(_backendMessage(res.body));
+  }
+
+  /// Restablece la contraseña con el token del enlace del correo.
+  /// POST /auth/reset-password con `Bearer` igual al token y `{contrasena}`.
+  Future<String> resetPassword({required String token, required String contrasena}) async {
+    late http.Response res;
+    try {
+      res = await _client
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/auth/reset-password'),
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+            body: jsonEncode({'contrasena': contrasena}),
+          )
+          .timeout(ApiConfig.timeout);
+    } on TimeoutException {
+      throw AuthException(tr('err_timeout'));
+    } on SocketException {
+      throw AuthException(tr('err_noconn'));
+    } on http.ClientException {
+      throw AuthException(tr('err_network'));
+    }
+
+    if (res.statusCode == 200) {
+      try {
+        final body = jsonDecode(res.body) as Map<String, dynamic>;
+        final msg = body['message'] as String?;
+        if (msg != null && msg.trim().isNotEmpty) return msg;
+      } catch (_) {}
+      return tr('pass_updated_generic');
+    }
+    throw AuthException(_backendMessage(res.body), res.statusCode);
   }
 
   static String _backendMessage(String body) {
@@ -120,6 +185,6 @@ class AuthService {
     } catch (_) {
       // cuerpo no-JSON: mensaje genérico abajo
     }
-    return 'Ocurrió un error. Intenta nuevamente.';
+    return tr('err_generic');
   }
 }

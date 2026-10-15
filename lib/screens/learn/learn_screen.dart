@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/lang.dart';
 import '../../theme/responsive.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/skeletons.dart';
@@ -30,16 +31,16 @@ class _LearnScreenState extends State<LearnScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Aprende sobre energía solar', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textDark)),
+        Text(tr('learn_title'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textDark)),
         const SizedBox(height: 4),
-        const Text('Explora nuestros módulos educativos y conviértete en un experto en energía limpia.', style: TextStyle(color: AppColors.textMedium)),
+        Text(tr('learn_sub'), style: const TextStyle(color: AppColors.textMedium)),
         const SizedBox(height: 16),
         _loading
             ? const LearnListSkeleton()
-            : const EmptyState(
+            : EmptyState(
                 icon: Icons.school_outlined,
-                title: 'Sin módulos por ahora',
-                subtitle: 'Los cursos aparecerán aquí cuando estén disponibles. Vuelve pronto.',
+                title: tr('no_modules'),
+                subtitle: tr('no_modules_sub'),
               ),
       ],
     );
@@ -59,16 +60,16 @@ class _LearnScreenState extends State<LearnScreen> {
                 IconButton(onPressed: () {}, icon: const Icon(Icons.menu_rounded, color: Colors.white)),
               ]),
               const SizedBox(height: 12),
-              const Center(child: Text('Aprende sobre energía solar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18))),
-              const Center(child: Text('Explora nuestros módulos educativos y\nconviértete en un experto en energía limpia.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 12.5))),
+              Center(child: Text(tr('learn_title'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18))),
+              Center(child: Text(tr('learn_sub'), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontSize: 12.5))),
               const SizedBox(height: 14),
               _loading
                   ? const LearnListSkeleton(dark: true)
-                  : const EmptyState(
+                  : EmptyState(
                       dark: true,
                       icon: Icons.school_outlined,
-                      title: 'Sin módulos por ahora',
-                      subtitle: 'Los cursos aparecerán aquí cuando estén disponibles.',
+                      title: tr('no_modules'),
+                      subtitle: tr('no_modules_sub'),
                     ),
             ],
           ),

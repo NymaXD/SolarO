@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/lang.dart';
 import '../../theme/responsive.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/home_cards.dart';
@@ -57,10 +58,10 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const SolarLogo(light: true, fontSize: 22),
             const SizedBox(height: 12),
-            const Text('Tu consumo:', style: TextStyle(color: Colors.white70, fontSize: 14)),
+            Text(tr('consumption'), style: const TextStyle(color: Colors.white70, fontSize: 14)),
             const Text('-- kWh', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white)),
             const SizedBox(height: 4),
-            const Text('Registra tu primer consumo para ver tu gráfico', style: TextStyle(color: Colors.white60, fontSize: 12)),
+            Text(tr('no_consumption'), style: const TextStyle(color: Colors.white60, fontSize: 12)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(14),
@@ -68,14 +69,14 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Consumo mensual (kWh)', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  Text(tr('monthly'), style: const TextStyle(color: Colors.white70, fontSize: 12)),
                   const SizedBox(height: 8),
                   _loading ? const ChartSkeleton(dark: true, height: 160) : const EmptyChartBox(dark: true, height: 160),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Tus electrodomésticos', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+            Text(tr('appliances'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
             const SizedBox(height: 8),
             _loading
                 ? Container(
@@ -86,15 +87,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 : EmptyState(
                     dark: true,
                     icon: Icons.kitchen_outlined,
-                    title: 'Sin electrodomésticos',
-                    subtitle: 'Agrega tu primer equipo para calcular su consumo. Saldrá aquí.',
-                    actionLabel: 'Agregar equipo',
+                    title: tr('no_appliances'),
+                    subtitle: tr('no_appliances_sub'),
+                    actionLabel: tr('add_equipment'),
                     onAction: () => openAppliances(context),
                   ),
             const SizedBox(height: 14),
-            SolarCtaCard(title: 'Aprende cómo ahorrar más energía', icon: Icons.school_outlined, onTap: () => _go(1)),
+            SolarCtaCard(title: tr('learn_cta'), icon: Icons.school_outlined, onTap: () => _go(1)),
             const SizedBox(height: 10),
-            SolarOutlineCard(title: 'Editar electrodomésticos', icon: Icons.settings_outlined, onTap: () => openAppliances(context)),
+            SolarOutlineCard(title: tr('edit_appliances'), icon: Icons.settings_outlined, onTap: () => openAppliances(context)),
           ],
         ),
       ),
@@ -113,9 +114,9 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Column(children: [
-              SolarCtaCard(title: 'Implementa energía solar en tu hogar', icon: Icons.solar_power_rounded, onTap: () => _go(2)),
+              SolarCtaCard(title: tr('solar_cta'), icon: Icons.solar_power_rounded, onTap: () => _go(2)),
               const SizedBox(height: 10),
-              SolarOutlineCard(title: 'Editar electrodomésticos', icon: Icons.settings_outlined, onTap: () => openAppliances(context)),
+              SolarOutlineCard(title: tr('edit_appliances'), icon: Icons.settings_outlined, onTap: () => openAppliances(context)),
             ]),
           ),
         ]),
@@ -138,9 +139,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               flex: 4,
               child: Column(children: [
-                SolarCtaCard(title: 'Implementa energía solar en tu hogar', icon: Icons.solar_power_rounded, onTap: () => _go(2)),
+                SolarCtaCard(title: tr('solar_cta'), icon: Icons.solar_power_rounded, onTap: () => _go(2)),
                 const SizedBox(height: 12),
-                SolarOutlineCard(title: 'Editar electrodomésticos', icon: Icons.settings_outlined, onTap: () => openAppliances(context)),
+                SolarOutlineCard(title: tr('edit_appliances'), icon: Icons.settings_outlined, onTap: () => openAppliances(context)),
               ]),
             ),
           ],
@@ -162,18 +163,18 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text('Tu consumo:', style: TextStyle(fontSize: 13, color: AppColors.textMedium)),
+                    Text(tr('consumption'), style: TextStyle(fontSize: 13, color: context.tMed)),
                     _loading
                         ? const SkeletonBox(height: 32, width: 140, radius: 6)
-                        : const Text('-- kWh', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: AppColors.primaryDark)),
-                    const Text('Sin registros. Aparecerá aquí al conectar datos.', style: TextStyle(fontSize: 12, color: AppColors.textMedium)),
+                        : Text('-- kWh', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: context.isDark ? Colors.white : AppColors.primaryDark)),
+                    Text(tr('no_records'), style: TextStyle(fontSize: 12, color: context.tMed)),
                   ]),
                 ),
-                const Icon(Icons.wb_sunny_outlined, color: AppColors.accentDark, size: 36),
+                const Icon(Icons.wb_sunny_outlined, color: AppColors.accent, size: 36),
               ],
             ),
             const SizedBox(height: 8),
-            const Text('Consumo mensual (kWh)', style: TextStyle(fontSize: 12, color: AppColors.textMedium)),
+            Text(tr('monthly'), style: TextStyle(fontSize: 12, color: context.tMed)),
             const SizedBox(height: 8),
             _loading ? const ChartSkeleton(height: 180) : const EmptyChartBox(height: 180),
           ],
@@ -190,17 +191,17 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.15), shape: BoxShape.circle), child: const Icon(Icons.school_outlined, color: AppColors.accentDark, size: 28)),
             const SizedBox(width: 14),
-            const Expanded(
+            Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Aprende cómo ahorrar más energía', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                SizedBox(height: 4),
-                Text('Consejos, guías y herramientas para optimizar tu consumo de energía.', style: TextStyle(fontSize: 13, color: AppColors.textMedium)),
+                Text(tr('banner_title'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: context.tDark)),
+                const SizedBox(height: 4),
+                Text(tr('banner_sub'), style: TextStyle(fontSize: 13, color: context.tMed)),
               ]),
             ),
             ElevatedButton(
               onPressed: () => onTap(1),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
-              child: const Text('Ir a Aprende'),
+              child: Text(tr('go_learn')),
             ),
           ],
         ),
@@ -221,15 +222,15 @@ class _AppliancesEmpty extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Tus electrodomésticos', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            Text(tr('appliances'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: ctx.tDark)),
             const SizedBox(height: 12),
             loading
                 ? const AppliancesSkeleton()
                 : EmptyState(
                     icon: Icons.kitchen_outlined,
-                    title: 'Sin equipos registrados',
-                    subtitle: 'Cuando agregues equipos aparecerán aquí con su consumo.',
-                    actionLabel: 'Agregar equipo',
+                    title: tr('no_equipment_reg'),
+                    subtitle: tr('no_equipment_reg_sub'),
+                    actionLabel: tr('add_equipment'),
                     onAction: () => openAppliances(context),
                   ),
           ],

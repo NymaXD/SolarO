@@ -29,10 +29,15 @@ class LearnModuleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = dark ? Colors.white.withValues(alpha: 0.06) : Colors.white;
-    final border = dark ? Colors.white.withValues(alpha: 0.14) : AppColors.divider;
-    final titleColor = dark ? Colors.white : AppColors.textDark;
-    final descColor = dark ? Colors.white70 : AppColors.textMedium;
+    final dd = dark || context.isDark;
+    final bg = dark
+        ? Colors.white.withValues(alpha: 0.06)
+        : (context.isDark ? AppColors.surfaceDark : Colors.white);
+    final border = dark
+        ? Colors.white.withValues(alpha: 0.14)
+        : (context.isDark ? AppColors.borderDark : AppColors.divider);
+    final titleColor = dd ? Colors.white : AppColors.textDark;
+    final descColor = dd ? Colors.white70 : AppColors.textMedium;
 
     return Container(
       decoration: BoxDecoration(
@@ -60,7 +65,7 @@ class LearnModuleCard extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: dark ? AppColors.accent.withValues(alpha: 0.15) : AppColors.accent.withValues(alpha: 0.18),
                       ),
-                      child: Icon(module.icon, color: dark ? AppColors.accent : AppColors.primary, size: 26),
+                      child: Icon(module.icon, color: dd ? AppColors.accent : AppColors.primary, size: 26),
                     ),
                     Positioned(
                       top: 0,
@@ -86,7 +91,7 @@ class LearnModuleCard extends StatelessWidget {
                         const SizedBox(height: 8),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(value: module.progress, minHeight: 5, backgroundColor: dark ? Colors.white24 : const Color(0xFFE2E8F5), valueColor: const AlwaysStoppedAnimation(AppColors.accent)),
+                          child: LinearProgressIndicator(value: module.progress, minHeight: 5, backgroundColor: dd ? Colors.white24 : const Color(0xFFE2E8F5), valueColor: const AlwaysStoppedAnimation(AppColors.accent)),
                         ),
                         const SizedBox(height: 4),
                         Text('${(module.progress * 100).toInt()}% completado', style: TextStyle(fontSize: 11, color: descColor)),
