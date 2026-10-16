@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 from flask_jwt_extended import create_refresh_token
 
 from auth.exceptions import ContrasenaInsegura
-from auth.service import actualizar_contrasena, validar_contrasena, validar_email, buscar_email_existente, verificar_contrasena, enviar_correo_contrasena_cambiada, describir_dispositivo
+from auth.service import actualizar_contrasena, validar_contrasena, validar_email, buscar_email_existente, verificar_contrasena, enviar_correo_contrasena_cambiada, describir_dispositivo, huella_contrasena
 
 from users.service import actualizar_datos_usuario
 from users.decorators import sesion_requerida
