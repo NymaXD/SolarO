@@ -2,6 +2,7 @@
 
 from flask import Blueprint, jsonify, request, current_app
 from sqlalchemy.exc import IntegrityError, OperationalError
+from flask_jwt_extended import create_refresh_token
 
 from auth.exceptions import ContrasenaInsegura
 from auth.service import actualizar_contrasena, validar_contrasena, validar_email, buscar_email_existente, verificar_contrasena, enviar_correo_contrasena_cambiada, describir_dispositivo
