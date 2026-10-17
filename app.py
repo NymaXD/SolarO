@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from extensions import db, bcrypt, jwt
 from auth.routes import auth
 from users.routes import users
+from appliances.routes import appliances
 import models
 
 from datetime import timedelta
@@ -50,6 +51,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=3)
 
 app.register_blueprint(auth)
 app.register_blueprint(users)
+app.register_blueprint(appliances)
 
 
 if __name__ == "__main__":
