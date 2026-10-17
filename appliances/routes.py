@@ -3,7 +3,7 @@
 from flask import Blueprint, jsonify, request, current_app
 from sqlalchemy.exc import OperationalError
 
-from models import Electrodomestico, InfoElectrodomestico
+from models import Electrodomestico
 from extensions import db
 from appliances.service import *
 from users.decorators import sesion_requerida
@@ -24,9 +24,7 @@ def obtener_electrodomesticos(usuario):
     respuesta = []
 
     for el in resultados:
-        respuesta.append(serializar_electrodomestico(
-            el.nombre, el.tipo, el.horas_dia, el.dias_semana, el.cantidad
-        ))
+        respuesta.append(serializar_electrodomestico(el))
         
     return jsonify(respuesta), 200
 
@@ -71,7 +69,7 @@ def nuevo_electrodomestico(usuario):
     dias_semana = int(data["dias_semana"])
     cantidad = int(data["cantidad"])
 
-    if (not 0 < horas_dia <= 24) or (not 1 <= dias_semana <= 7) or cantidad < 1:
+    if (not 0 < horas_dia <= 24) or (not 1 <= dias_semana <= 7) or (not 1 <= cantidad < 100):
         return jsonify({"message": "Datos inválidos. Revise nuevamente."}), 422
 
     # Crear electrodoméstico
@@ -81,6 +79,10 @@ def nuevo_electrodomestico(usuario):
     except OperationalError:
         current_app.logger.exception(f"Error al conectar con la base de datos.")
         return jsonify({"message": "Error de conexión"}), 500
+
+    except ValueError:
+        current_app.logger.exception("Error al obtener potencia del catálogo.")
+        return jsonify({"message": "Tipo de electrodoméstico inválido."}), 422
 
     except Exception:
         current_app.logger.exception(f"Error al crear el electrodoméstico")
@@ -133,7 +135,7 @@ def editar_electrodomestico(id_, usuario):
     dias_semana = int(data["dias_semana"])
     cantidad = int(data["cantidad"])
 
-    if (not 0 < horas_dia <= 24) or (not 1 <= dias_semana <= 7) or cantidad < 1:
+    if (not 0 < horas_dia <= 24) or (not 1 <= dias_semana <= 7) or (not 1 <= cantidad < 100):
         return jsonify({"message": "Datos inválidos. Revise nuevamente."}), 422
 
     # Obtener electrodoméstico a modificar
@@ -156,6 +158,10 @@ def editar_electrodomestico(id_, usuario):
     except OperationalError:
         current_app.logger.exception(f"Error al conectar con la base de datos.")
         return jsonify({"message": "Error de conexión"}), 500
+
+    except ValueError:
+            current_app.logger.exception("Error al obtener potencia del catálogo.")
+            return jsonify({"message": "Tipo de electrodoméstico inválido."}), 422
         
     except Exception:
         current_app.logger.exception(f"Error al actualizar el electrodoméstico {electrodomestico.id_electrodomestico}")
@@ -198,9 +204,7 @@ def obtener_electrodomestico_id(id_, usuario):
     if not electro or electro.id_usuario != usuario.id_usuario:
         return jsonify({"message": "Electrodoméstico no encontrado"}), 404
 
-    return jsonify(serializar_electrodomestico(
-            electro.nombre, electro.tipo, electro.horas_dia, electro.dias_semana, electro.cantidad
-        )), 200
+    return jsonify(serializar_electrodomestico(electro)), 200
 
 
 @appliances.route("/appliances/info", methods=["GET"])

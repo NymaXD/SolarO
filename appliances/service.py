@@ -22,7 +22,7 @@ def calcular_kwh(potencia_w: int, horas_dia: float, dias_semana: int, cantidad: 
 
 def serializar_electrodomestico(electrodomestico: Electrodomestico) -> dict:
     """Serializa un electrodoméstico en un diccionario para posteriormente ser retornado como JSON"""
-    consumo = calcular_kwh(electrodomestico.potencia, electrodomestico.horas_dia, electrodomestico.dias_semana, electrodomestico.cantidad)
+    consumo = calcular_kwh(electrodomestico.potencia_w, electrodomestico.horas_dia, electrodomestico.dias_semana, electrodomestico.cantidad)
     return {
         "id": electrodomestico.id_electrodomestico,
         "nombre": electrodomestico.nombre,
