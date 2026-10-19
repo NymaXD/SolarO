@@ -11,7 +11,7 @@ def sesion_requerida(fn):
 
     @wraps(fn)
     @jwt_required()
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, usuario=usuario, **kwargs):
         
         # --- Validar que el token sea de sesión ---
         if get_jwt().get("purpose") != "session":
