@@ -284,24 +284,25 @@ class _ApplianceDialog extends StatefulWidget {
 }
 
 class _ApplianceDialogState extends State<_ApplianceDialog> {
+  static const _defaultHours = 8.0;
+
   final _form = GlobalKey<FormState>();
   late final TextEditingController _name;
-  late final TextEditingController _hours;
   late final TextEditingController _days;
-  late final TextEditingController _kwh;
   late String? _tipo;
   int _qty = 1;
-  bool _byConsumption = false;
-  bool _kwhWarning = false;
+  double _kwh = 0;
 
   double get _power => (widget.catalog[_tipo] ?? 0).toDouble();
-  double get _hoursVal =>
-      double.tryParse(_hours.text.replaceAll(',', '.')) ?? 0;
-  int get _daysVal => int.tryParse(_days.text.trim()) ?? 0;
+  int get _daysVal => (int.tryParse(_days.text.trim()) ?? 7).clamp(1, 7);
 
-  double get _estimate {
-    final v = (_power / 1000) * _hoursVal * _daysVal * 4.33 * _qty;
-    return v.isFinite && v > 0 ? v : 0;
+  double get _maxKwh => (_power / 1000) * 24 * _daysVal * 4.33 * _qty;
+  double get _minKwh => (_power / 1000) * 0.1 * _daysVal * 4.33 * _qty;
+
+  double get _hours {
+    final base = (_power / 1000) * _daysVal * 4.33 * _qty;
+    if (base <= 0) return 0;
+    return (_kwh / base).clamp(0.0, 24.0);
   }
 
   @override
@@ -309,7 +310,6 @@ class _ApplianceDialogState extends State<_ApplianceDialog> {
     super.initState();
     final ex = widget.existing;
     _name = TextEditingController(text: ex?.name ?? '');
-    _hours = TextEditingController(text: ex != null ? _fmt(ex.hoursPerDay) : '');
     _days = TextEditingController(
         text: ex != null ? ex.daysPerWeek.toString() : '7');
     _qty = ex?.quantity ?? 1;
@@ -317,63 +317,52 @@ class _ApplianceDialogState extends State<_ApplianceDialog> {
     if (_tipo == null && widget.catalog.isNotEmpty) {
       _tipo = widget.catalog.keys.first;
     }
-    _kwh = TextEditingController(
-        text: _estimate > 0 ? _estimate.toStringAsFixed(1) : '');
+    final hours = ex?.hoursPerDay ?? _defaultHours;
+    _kwh = (_power / 1000) * hours * _daysVal * 4.33 * _qty;
   }
-
-  String _fmt(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
 
   @override
   void dispose() {
     _name.dispose();
-    _hours.dispose();
     _days.dispose();
-    _kwh.dispose();
     super.dispose();
   }
 
-  /// Recalcula las horas/día a partir del consumo mensual deseado.
-  void _applyConsumption(String raw) {
-    final kwh = double.tryParse(raw.replaceAll(',', '.'));
-    final base = (_power / 1000) * _daysVal * 4.33 * _qty;
-    var warn = false;
-    if (kwh != null && kwh > 0 && base > 0) {
-      final h = kwh / base;
-      if (h > 24) {
-        _hours.text = '24';
-        warn = true;
-      } else if (h < 0.1) {
-        _hours.text = '0.1';
-        warn = true;
-      } else {
-        _hours.text = _fmt(double.parse(h.toStringAsFixed(2)));
-      }
-    }
-    setState(() => _kwhWarning = warn);
+  void _clampKwh() {
+    final maxK = _maxKwh;
+    if (maxK > 0) _kwh = _kwh.clamp(_minKwh, maxK);
   }
 
   void _setQty(int delta) {
     final next = (_qty + delta).clamp(1, 99);
     if (next == _qty) return;
-    setState(() => _qty = next);
-    if (_byConsumption) _applyConsumption(_kwh.text);
+    setState(() {
+      _qty = next;
+      _clampKwh();
+    });
   }
 
-  void _toggleConsumption(bool v) {
+  void _onTypeChanged(String? v) {
     setState(() {
-      _byConsumption = v;
-      _kwhWarning = false;
-      if (v) {
-        _kwh.text = _estimate > 0 ? _estimate.toStringAsFixed(1) : '';
-      }
+      _tipo = v;
+      _kwh = (_power / 1000) * _defaultHours * _daysVal * 4.33 * _qty;
     });
+  }
+
+  String _num(double v) {
+    final r = double.parse(v.toStringAsFixed(1));
+    return r == r.roundToDouble()
+        ? r.toStringAsFixed(0)
+        : r.toStringAsFixed(1);
   }
 
   @override
   Widget build(BuildContext context) {
     final tipos = widget.catalog.keys.toList();
     final accent = context.isDark ? AppColors.accent : AppColors.accentDark;
+    final maxK = _maxKwh;
+    final sliderMax = maxK > _minKwh ? maxK : _minKwh + 1;
+    final sliderValue = _kwh.clamp(_minKwh, sliderMax);
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       title: Row(
@@ -423,10 +412,7 @@ class _ApplianceDialogState extends State<_ApplianceDialog> {
                             overflow: TextOverflow.ellipsis),
                       ),
                   ],
-                  onChanged: (v) {
-                    setState(() => _tipo = v);
-                    if (_byConsumption) _applyConsumption(_kwh.text);
-                  },
+                  onChanged: _onTypeChanged,
                   validator: (v) =>
                       v == null || v.isEmpty ? tr('v_required') : null,
                 ),
@@ -435,11 +421,9 @@ class _ApplianceDialogState extends State<_ApplianceDialog> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.primary
-                        .withValues(alpha: context.isDark ? 0.28 : 0.06),
+                    color: context.cardBg,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: AppColors.accent.withValues(alpha: 0.55)),
+                    border: Border.all(color: context.border),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -453,12 +437,12 @@ class _ApplianceDialogState extends State<_ApplianceDialog> {
                                 fontSize: 12.5,
                                 color: context.tDark)),
                       ]),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            _estimate > 0 ? _estimate.toStringAsFixed(1) : '--',
+                            _power > 0 ? _num(_kwh) : '--',
                             style: TextStyle(
                                 fontSize: 30,
                                 fontWeight: FontWeight.w900,
@@ -476,50 +460,55 @@ class _ApplianceDialogState extends State<_ApplianceDialog> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 5),
                       Text(
-                        _estimate > 0
-                            ? '${_power.toStringAsFixed(0)} W · ${_fmt(_hoursVal)} ${tr('fld_hours_short')} · $_daysVal ${tr('fld_days_short')} · x$_qty'
+                        _power > 0
+                            ? '${_power.toStringAsFixed(0)} W · ${_num(_hours)} ${tr('fld_hours_short')} · $_daysVal ${tr('fld_days_short')} · x$_qty'
                             : tr('estimate_hint'),
-                        style:
-                            TextStyle(fontSize: 11.5, color: context.tMed),
+                        style: TextStyle(fontSize: 11.5, color: context.tMed),
                       ),
+                      if (_power > 0) ...[
+                        const SizedBox(height: 8),
+                        SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            activeTrackColor: accent,
+                            inactiveTrackColor: context.border,
+                            thumbColor: accent,
+                            overlayColor: accent.withValues(alpha: 0.15),
+                            trackHeight: 3,
+                          ),
+                          child: Slider(
+                            value: sliderValue,
+                            min: _minKwh,
+                            max: sliderMax,
+                            label: '${_num(_kwh)} ${tr('kwh_month')}',
+                            onChanged: (v) => setState(() => _kwh = v),
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('${_num(_minKwh)} ${tr('kwh_month')}',
+                                style: TextStyle(
+                                    fontSize: 10.5, color: context.tMed)),
+                            Text('${_num(sliderMax)} ${tr('kwh_month')}',
+                                style: TextStyle(
+                                    fontSize: 10.5, color: context.tMed)),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
                 const SizedBox(height: 12),
-                Row(children: [
-                  if (!_byConsumption) ...[
-                    Expanded(
-                      child: SolarTextField(
-                          controller: _hours,
-                          label: tr('fld_hours'),
-                          hint: tr('fld_hours_hint'),
-                          prefix: Icons.schedule_outlined,
-                          keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
-                          onChanged: (_) => setState(() {}),
-                          validator: _hoursV),
-                    ),
-                    const SizedBox(width: 10),
-                  ],
-                  Expanded(
-                    child: SolarTextField(
-                        controller: _days,
-                        label: tr('fld_days'),
-                        hint: '1 - 7',
-                        prefix: Icons.calendar_month_outlined,
-                        keyboardType: TextInputType.number,
-                        onChanged: (_) {
-                          if (_byConsumption) {
-                            _applyConsumption(_kwh.text);
-                          } else {
-                            setState(() {});
-                          }
-                        },
-                        validator: _daysV),
-                  ),
-                ]),
+                SolarTextField(
+                    controller: _days,
+                    label: tr('fld_days'),
+                    hint: '1 - 7',
+                    prefix: Icons.calendar_month_outlined,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setState(_clampKwh),
+                    validator: _daysV),
                 const SizedBox(height: 8),
                 Row(children: [
                   Text(tr('qty'),
@@ -540,42 +529,6 @@ class _ApplianceDialogState extends State<_ApplianceDialog> {
                       onPressed: () => _setQty(1),
                       icon: const Icon(Icons.add_circle_outline)),
                 ]),
-                const Divider(height: 18),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _byConsumption,
-                  onChanged: _toggleConsumption,
-                  title: Text(tr('adjust_consumption'),
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13.5,
-                          color: context.tDark)),
-                  subtitle: Text(tr('adjust_consumption_sub'),
-                      style: TextStyle(fontSize: 12, color: context.tMed)),
-                ),
-                if (_byConsumption) ...[
-                  const SizedBox(height: 8),
-                  SolarTextField(
-                      controller: _kwh,
-                      label: tr('kwh_month'),
-                      hint: tr('example_kwh'),
-                      prefix: Icons.bolt_outlined,
-                      keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true),
-                      onChanged: _applyConsumption,
-                      validator: _kwhV),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${tr('equiv_hours')} ${_fmt(_hoursVal)} ${tr('fld_hours_short')}',
-                    style: TextStyle(fontSize: 12, color: context.tMed),
-                  ),
-                  if (_kwhWarning) ...[
-                    const SizedBox(height: 4),
-                    Text(tr('kwh_too_high'),
-                        style: const TextStyle(
-                            fontSize: 12, color: AppColors.error)),
-                  ],
-                ],
               ],
             ),
           ),
@@ -585,33 +538,24 @@ class _ApplianceDialogState extends State<_ApplianceDialog> {
         TextButton(
             onPressed: () => Navigator.pop(context), child: Text(tr('cancel'))),
         ElevatedButton(
-          onPressed: _kwhWarning
-              ? null
-              : () {
-                  if (!(_form.currentState?.validate() ?? false)) return;
-                  final data = ApplianceItemData(
-                    id: widget.existing?.id,
-                    name: _name.text.trim(),
-                    tipo: _tipo!,
-                    powerW: _power,
-                    hoursPerDay: _hoursVal,
-                    daysPerWeek: _daysVal,
-                    quantity: _qty,
-                  );
-                  Navigator.pop(context, data);
-                },
+          onPressed: () {
+            if (!(_form.currentState?.validate() ?? false)) return;
+            if (_power <= 0) return;
+            final data = ApplianceItemData(
+              id: widget.existing?.id,
+              name: _name.text.trim(),
+              tipo: _tipo!,
+              powerW: _power,
+              hoursPerDay: double.parse(_hours.toStringAsFixed(2)),
+              daysPerWeek: _daysVal,
+              quantity: _qty,
+            );
+            Navigator.pop(context, data);
+          },
           child: Text(widget.existing == null ? tr('add') : tr('save')),
         ),
       ],
     );
-  }
-
-  String? _hoursV(String? v) {
-    if (v == null || v.trim().isEmpty) return tr('v_required');
-    final n = double.tryParse(v.replaceAll(',', '.'));
-    if (n == null) return tr('e_num');
-    if (n <= 0 || n > 24) return tr('e_hours');
-    return null;
   }
 
   String? _daysV(String? v) {
@@ -619,15 +563,6 @@ class _ApplianceDialogState extends State<_ApplianceDialog> {
     final n = int.tryParse(v.trim());
     if (n == null) return tr('e_num');
     if (n < 1 || n > 7) return '1 - 7';
-    return null;
-  }
-
-  String? _kwhV(String? v) {
-    if (!_byConsumption) return null;
-    if (v == null || v.trim().isEmpty) return tr('v_required');
-    final n = double.tryParse(v.replaceAll(',', '.'));
-    if (n == null) return tr('e_num');
-    if (n <= 0) return tr('e_positive');
     return null;
   }
 }
