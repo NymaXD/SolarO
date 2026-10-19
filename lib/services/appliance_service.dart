@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -5,6 +6,24 @@ import 'package:http/http.dart' as http;
 import 'api_config.dart';
 import 'auth_service.dart';
 import '../theme/lang.dart';
+
+/// Convierte a double tolerando que el backend devuelva el número como texto
+/// (las columnas NUMERIC/Decimal se serializan como "2280.00").
+double _toDouble(dynamic v) {
+  if (v is num) return v.toDouble();
+  if (v is String) return double.tryParse(v.trim()) ?? 0;
+  return 0;
+}
+
+/// Igual que [_toDouble] pero devuelve null si no hay valor usable.
+int? _toInt(dynamic v) {
+  if (v is num) return v.toInt();
+  if (v is String) {
+    final t = v.trim();
+    return int.tryParse(t) ?? double.tryParse(t)?.toInt();
+  }
+  return null;
+}
 
 /// Electrodoméstico tal como lo expone el backend.
 class ApplianceItemData {
@@ -30,14 +49,14 @@ class ApplianceItemData {
 
   factory ApplianceItemData.fromJson(Map<String, dynamic> e) {
     return ApplianceItemData(
-      id: (e['id'] as num?)?.toInt(),
-      name: (e['nombre'] as String?) ?? '',
-      tipo: (e['tipo'] as String?) ?? '',
-      powerW: ((e['potencia_w'] as num?) ?? 0).toDouble(),
-      hoursPerDay: ((e['horas_dia'] as num?) ?? 0).toDouble(),
-      daysPerWeek: ((e['dias_semana'] as num?) ?? 7).toInt(),
-      quantity: ((e['cantidad'] as num?) ?? 1).toInt(),
-      kwhMonth: ((e['consumo_mensual'] as num?) ?? 0).toDouble(),
+      id: _toInt(e['id']),
+      name: e['nombre']?.toString() ?? '',
+      tipo: e['tipo']?.toString() ?? '',
+      powerW: _toDouble(e['potencia_w']),
+      hoursPerDay: _toDouble(e['horas_dia']),
+      daysPerWeek: _toInt(e['dias_semana']) ?? 7,
+      quantity: _toInt(e['cantidad']) ?? 1,
+      kwhMonth: _toDouble(e['consumo_mensual']),
     );
   }
 
@@ -62,43 +81,110 @@ class ApplianceService {
       };
 
   String _msg(http.Response res) {
-    try {
-      final data = jsonDecode(res.body);
-      if (data is Map && data['message'] is String) return data['message'] as String;
-    } catch (_) {}
+    final data = _jsonMap(res);
+    final msg = data?['message'] ?? data?['msg'];
+    if (msg is String && msg.trim().isNotEmpty) return msg;
     return tr('err_generic');
   }
 
+  Map<String, dynamic>? _jsonMap(http.Response res) {
+    try {
+      final data = jsonDecode(res.body);
+      if (data is Map) {
+        return data.map((k, v) => MapEntry('$k', v));
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// true si el error viene de JWT (token inválido/expirado). Flask-JWT lo
+  /// responde con `{msg: ...}` y 401/403/422, mientras que los errores de
+  /// validación propios usan la clave `message`.
+  bool _invalidToken(http.Response res) {
+    if (res.statusCode == 401 || res.statusCode == 403) return true;
+    final data = _jsonMap(res);
+    return data != null &&
+        data.containsKey('msg') &&
+        !data.containsKey('message');
+  }
+
   Never _throw(http.Response res) {
-    if (res.statusCode == 401 || res.statusCode == 403) {
+    if (_invalidToken(res)) {
       throw AuthException(tr('session_expired'), 401);
     }
     throw AuthException(_msg(res), res.statusCode);
   }
 
-  Future<List<ApplianceItemData>> getAppliances(String token) async {
-    final res = await _client
-        .get(Uri.parse('${ApiConfig.baseUrl}/appliances'), headers: _headers(token))
-        .timeout(ApiConfig.timeout);
-    if (res.statusCode == 200) {
-      final list = jsonDecode(res.body) as List;
-      return list
-          .map((e) => ApplianceItemData.fromJson(e as Map<String, dynamic>))
-          .toList();
+  /// Reintenta una vez en errores de red/tiempo (ej: Render arrancando en frío)
+  /// o si el backend responde 5xx (la lista no tiene manejo de error de BD).
+  Future<T> _withRetry<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } on TimeoutException {
+      await Future.delayed(const Duration(seconds: 2));
+      return await run();
+    } on http.ClientException {
+      await Future.delayed(const Duration(seconds: 2));
+      return await run();
+    } on AuthException catch (e) {
+      if (e.statusCode >= 500) {
+        await Future.delayed(const Duration(seconds: 2));
+        return await run();
+      }
+      rethrow;
     }
-    _throw(res);
   }
 
-  Future<Map<String, int>> getCatalog(String token) async {
-    final res = await _client
-        .get(Uri.parse('${ApiConfig.baseUrl}/appliances/info'), headers: _headers(token))
-        .timeout(ApiConfig.timeout);
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body) as Map<String, dynamic>;
-      return data.map((k, v) => MapEntry(k, (v as num).toInt()));
+  List<dynamic> _asList(dynamic decoded) {
+    if (decoded is List) return decoded;
+    if (decoded is Map) {
+      for (final key in ['items', 'data', 'appliances', 'electrodomesticos']) {
+        final value = decoded[key];
+        if (value is List) return value;
+      }
     }
-    _throw(res);
+    return const [];
   }
+
+  Map<String, dynamic> _asMap(dynamic decoded) {
+    if (decoded is Map<String, dynamic>) return decoded;
+    if (decoded is Map) return decoded.map((k, v) => MapEntry('$k', v));
+    if (decoded is List && decoded.isNotEmpty) {
+      for (final entry in decoded) {
+        final map = _asMap(entry);
+        if (map.isNotEmpty) return map;
+      }
+    }
+    return const {};
+  }
+
+  Future<List<ApplianceItemData>> getAppliances(String token) =>
+      _withRetry(() async {
+        final res = await _client
+            .get(Uri.parse('${ApiConfig.baseUrl}/appliances'),
+                headers: _headers(token))
+            .timeout(ApiConfig.timeout);
+        if (res.statusCode == 200) {
+          return _asList(jsonDecode(res.body))
+              .whereType<Map>()
+              .map((e) => ApplianceItemData.fromJson(
+                  e.map((k, v) => MapEntry('$k', v))))
+              .toList();
+        }
+        _throw(res);
+      });
+
+  Future<Map<String, int>> getCatalog(String token) => _withRetry(() async {
+        final res = await _client
+            .get(Uri.parse('${ApiConfig.baseUrl}/appliances/info'),
+                headers: _headers(token))
+            .timeout(ApiConfig.timeout);
+        if (res.statusCode == 200) {
+          return _asMap(jsonDecode(res.body)).map(
+              (k, v) => MapEntry(k, _toInt(v) ?? 0));
+        }
+        _throw(res);
+      });
 
   Future<void> createAppliance(String token, ApplianceItemData item) async {
     final res = await _client

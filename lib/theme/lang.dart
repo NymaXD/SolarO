@@ -198,6 +198,7 @@ class AppLang {
     'err_network': {'es': 'Error de red al contactar el servidor.', 'en': 'Network error contacting the server.'},
     'err_unexpected': {'es': 'Respuesta inesperada del servidor.', 'en': 'Unexpected server response.'},
     'err_generic': {'es': 'Ocurrió un error. Intenta nuevamente.', 'en': 'Something went wrong. Try again.'},
+    'server_slow': {'es': 'El servidor tardó en responder. Intenta de nuevo en unos segundos.', 'en': 'The server took too long. Try again in a few seconds.'},
     'session_expired': {'es': 'Sesión vencida. Inicia sesión de nuevo.', 'en': 'Session expired. Log in again.'},
     'forgot_generic': {'es': 'Si el correo está registrado, recibirás instrucciones.', 'en': 'If the email is registered, you will receive instructions.'},
     'pass_updated_generic': {'es': 'Contraseña actualizada. Ahora puedes iniciar sesión.', 'en': 'Password updated. You can now log in.'},

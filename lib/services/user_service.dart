@@ -26,6 +26,26 @@ class UserService {
     throw AuthException(tr('err_network'));
   }
 
+  /// true si el error proviene de JWT (token inválido/expirado). Flask-JWT
+  /// responde con `{msg: ...}` y 401/403/422; los errores de validación
+  /// propios usan la clave `message`.
+  static bool _invalidToken(http.Response res) {
+    if (res.statusCode == 401 || res.statusCode == 403) return true;
+    try {
+      final json = jsonDecode(res.body);
+      return json is Map && json.containsKey('msg') && !json.containsKey('message');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Never _throwResponse(http.Response res) {
+    if (_invalidToken(res)) {
+      throw AuthException(tr('session_expired'), 401);
+    }
+    throw AuthException(_msg(res.body), res.statusCode);
+  }
+
   /// GET /users/me → datos actuales.
   Future<AuthUser> getMe(String token) async {
     late http.Response res;
@@ -37,10 +57,7 @@ class UserService {
     if (res.statusCode == 200) {
       return AuthUser.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
     }
-    if (res.statusCode == 401 || res.statusCode == 403) {
-      throw AuthException(tr('session_expired'), 401);
-    }
-    throw AuthException(_msg(res.body), res.statusCode);
+    _throwResponse(res);
   }
 
   /// PUT /users/me con EXACTAMENTE {nombre, email}. 204 = ok (sin cuerpo).
@@ -60,10 +77,7 @@ class UserService {
     if (res.statusCode == 204) {
       return AuthUser(id: 0, nombre: nombre.trim(), email: email.trim().toLowerCase());
     }
-    if (res.statusCode == 401 || res.statusCode == 403) {
-      throw AuthException(tr('session_expired'), 401);
-    }
-    throw AuthException(_msg(res.body), res.statusCode);
+    _throwResponse(res);
   }
 
   /// PUT /users/me/password con EXACTAMENTE {contrasena_antigua, contrasena_nueva}.
@@ -84,16 +98,13 @@ class UserService {
     if (res.statusCode == 200) {
       return _msg(res.body, fallback: 'Contraseña actualizada.');
     }
-    if (res.statusCode == 401 || res.statusCode == 403) {
-      throw AuthException(tr('session_expired'), 401);
-    }
-    throw AuthException(_msg(res.body), res.statusCode);
+    _throwResponse(res);
   }
 
   static String _msg(String body, {String fallback = 'Ocurrió un error. Intenta nuevamente.'}) {
     try {
       final json = jsonDecode(body) as Map<String, dynamic>;
-      final msg = json['message'] as String?;
+      final msg = (json['message'] ?? json['msg']) as String?;
       if (msg != null && msg.trim().isNotEmpty) return msg;
     } catch (_) {}
     return fallback;

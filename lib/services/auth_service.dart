@@ -234,7 +234,7 @@ class AuthService {
   static String _backendMessage(String body) {
     try {
       final json = jsonDecode(body) as Map<String, dynamic>;
-      final msg = json['message'] as String?;
+      final msg = (json['message'] ?? json['msg']) as String?;
       if (msg != null && msg.trim().isNotEmpty) return msg;
     } catch (_) {
       // cuerpo no-JSON: mensaje genérico abajo

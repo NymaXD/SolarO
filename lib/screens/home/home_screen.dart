@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../../services/appliance_service.dart';
+import '../../services/auth_service.dart';
 import '../../services/session_store.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/lang.dart';
 import '../../theme/responsive.dart';
+import '../../widgets/appliance_icon.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/home_cards.dart';
 import '../../widgets/skeletons.dart';
 import '../../widgets/solar_logo.dart';
 import '../appliances/appliances_screen.dart';
+import '../auth/auth_screen.dart';
 
 Future<void> openAppliances(BuildContext context, {VoidCallback? onClosed}) async {
   await Navigator.of(context)
@@ -17,32 +20,9 @@ Future<void> openAppliances(BuildContext context, {VoidCallback? onClosed}) asyn
   onClosed?.call();
 }
 
-IconData _iconForTipo(String tipo) {
-  final t = tipo.toLowerCase();
-  if (t.contains('nevera') || t.contains('refrig')) return Icons.kitchen_outlined;
-  if (t.contains('lavadora')) return Icons.local_laundry_service_outlined;
-  if (t.contains('secadora')) return Icons.dry_cleaning_outlined;
-  if (t.contains('aire') || t.contains('acond')) return Icons.ac_unit_rounded;
-  if (t.contains('televisor') || t.contains('tv')) return Icons.tv_outlined;
-  if (t.contains('microondas')) return Icons.microwave_outlined;
-  if (t.contains('horno')) return Icons.microwave_outlined;
-  if (t.contains('computador') || t.contains('pc')) return Icons.computer_outlined;
-  if (t.contains('licuadora')) return Icons.blender_outlined;
-  if (t.contains('plancha')) return Icons.iron_outlined;
-  if (t.contains('bombillo') || t.contains('luz')) return Icons.lightbulb_outline_rounded;
-  if (t.contains('ventilador')) return Icons.wind_power_outlined;
-  if (t.contains('calentador')) return Icons.water_damage_outlined;
-  if (t.contains('lavavajillas')) return Icons.countertops_outlined;
-  return Icons.electrical_services_outlined;
-}
+IconData _iconForTipo(String tipo) => applianceIconForTipo(tipo);
 
-const _tileColors = [
-  AppColors.iconBlue,
-  AppColors.iconPink,
-  AppColors.iconCyan,
-  AppColors.iconPurple,
-  AppColors.iconYellow,
-];
+const _tileColors = applianceTileColors;
 
 /// Dashboard con datos reales de electrodomésticos (/appliances).
 class HomeScreen extends StatefulWidget {
@@ -75,6 +55,16 @@ class _HomeScreenState extends State<HomeScreen> {
       final list = await _service.getAppliances(token);
       if (!mounted) return;
       setState(() => _items = list);
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      if (e.statusCode == 401) {
+        await SessionStore.clear();
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const AuthScreen()));
+        return;
+      }
+      setState(() => _items = []);
     } catch (_) {
       if (!mounted) return;
       setState(() => _items = []);
@@ -412,11 +402,8 @@ class _AppliancesSummary extends StatelessWidget {
                 ListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    radius: 18,
-                    backgroundColor: _tileColors[i % _tileColors.length].withValues(alpha: 0.14),
-                    child: Icon(_iconForTipo(items[i].tipo), size: 18, color: _tileColors[i % _tileColors.length]),
-                  ),
+                  leading: ApplianceTypeIcon(
+                      tipo: items[i].tipo, index: i, radius: 18, iconSize: 18),
                   title: Text('${items[i].name} x${items[i].quantity}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
                   subtitle: Text(items[i].tipo, style: TextStyle(fontSize: 12, color: context.tMed)),
                   trailing: Text('${items[i].kwhMonth.toStringAsFixed(1)} kWh', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: context.isDark ? Colors.white : AppColors.primaryDark)),

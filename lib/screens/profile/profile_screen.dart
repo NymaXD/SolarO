@@ -7,6 +7,7 @@ import '../../widgets/solar_buttons.dart';
 import '../../widgets/solar_logo.dart';
 import '../../widgets/solar_text_field.dart';
 import '../../services/session_store.dart';
+import '../auth/auth_screen.dart';
 
 /// Mi perfil conectado al backend (`GET|PUT /users/me`, `PUT /users/me/password`).
 /// Precarga desde la sesión y refresca contra la API al abrir.
@@ -58,6 +59,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _sessionExpired() async {
+    await SessionStore.clear();
+    if (!mounted) return;
+    Navigator.of(context)
+        .pushReplacement(MaterialPageRoute(builder: (_) => const AuthScreen()));
+  }
+
   Future<void> _save() async {
     if (!(_form.currentState?.validate() ?? false)) return;
     final token = await SessionStore.validToken();
@@ -75,6 +83,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('profile_updated'))));
     } on AuthException catch (e) {
       if (!mounted) return;
+      if (e.statusCode == 401) {
+        await _sessionExpired();
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -103,6 +115,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } on AuthException catch (e) {
       if (!mounted) return;
+      if (e.statusCode == 401) {
+        await _sessionExpired();
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
       if (mounted) setState(() => _changing = false);
