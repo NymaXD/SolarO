@@ -2,8 +2,9 @@
 
 from flask import Blueprint, jsonify, request, current_app
 from sqlalchemy.exc import OperationalError
+from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 
-from models import Electrodomestico
+from models import Electrodomestico, Usuario
 from extensions import db
 from appliances.service import *
 from users.decorators import sesion_requerida
@@ -99,8 +100,18 @@ def nuevo_electrodomestico(usuario):
 
 
 @appliances.route("/appliances/<int:id_>", methods=["PUT"])
-@sesion_requerida
-def editar_electrodomestico(id_, usuario):
+@jwt_required
+def editar_electrodomestico(id_):
+
+    # --- Validar que el token sea de sesión ---
+    if get_jwt().get("purpose") != "session":
+        return jsonify({"message": "No tiene permiso para realizar esta operación."}), 403
+            
+    # --- Obtener usuario ---
+    usuario = db.session.get(Usuario, int(get_jwt_identity()))
+
+    if usuario is None:
+        return jsonify({"message": "Usuario no encontrado."}), 401
     
     data = request.get_json(silent=True)
 
@@ -178,8 +189,18 @@ def editar_electrodomestico(id_, usuario):
 
 
 @appliances.route("/appliances/<int:id_>", methods=["DELETE"])
-@sesion_requerida
+@jwt_required
 def eliminar_electrodomestico(id_, usuario):
+
+    # --- Validar que el token sea de sesión ---
+    if get_jwt().get("purpose") != "session":
+        return jsonify({"message": "No tiene permiso para realizar esta operación."}), 403
+            
+    # --- Obtener usuario ---
+    usuario = db.session.get(Usuario, int(get_jwt_identity()))
+
+    if usuario is None:
+        return jsonify({"message": "Usuario no encontrado."}), 401
     
     # Obtener electrodoméstico a eliminar
     electrodomestico = db.session.get(Electrodomestico, id_)
