@@ -209,7 +209,7 @@ def obtener_electrodomestico_id(id_, usuario):
 
 @appliances.route("/appliances/info", methods=["GET"])
 @sesion_requerida
-def obtener_catalogo_electrodomesticos():
+def obtener_catalogo_electrodomesticos(usuario):
     
     response = obtener_electrodomesticos_disponibles()
     return jsonify(response), 200
