@@ -2,6 +2,7 @@
 
 from models import Electrodomestico, InfoElectrodomestico
 from extensions import db
+from decimal import Decimal
 
 def obtener_potencia(tipo_electrodomestico: str) -> int:
     """Obtiene la potencia en W de un electrodoméstico"""
@@ -17,7 +18,7 @@ def obtener_potencia(tipo_electrodomestico: str) -> int:
 
 def calcular_kwh(potencia_w: int, horas_dia: float, dias_semana: int, cantidad: int) -> float:
     """Calcula el consumo mensual en kWh de un electrodoméstico"""
-    return (potencia_w / 1000) * horas_dia * dias_semana * 4.33 * cantidad
+    return (potencia_w / 1000) * Decimal(str(horas_dia)) * dias_semana * Decimal('4.33') * cantidad
 
 
 def serializar_electrodomestico(electrodomestico: Electrodomestico) -> dict:
