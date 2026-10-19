@@ -76,6 +76,6 @@ class InfoElectrodomestico(db.Model):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     
-    nombre: Mapped[str] = mapped_column(String(255), nullable=False)
+    nombre: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     
     potencia_watts: Mapped[int] = mapped_column(Integer, nullable=False)

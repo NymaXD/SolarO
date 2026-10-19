@@ -4,32 +4,36 @@ from models import Electrodomestico, InfoElectrodomestico
 from extensions import db
 from decimal import Decimal
 
+
+class PotenciaInvalida(ValueError): ...
+
+
 def obtener_potencia(tipo_electrodomestico: str) -> int:
     """Obtiene la potencia en W de un electrodoméstico"""
     potencia = db.session.execute(
         db.select(InfoElectrodomestico.potencia_watts).where(InfoElectrodomestico.nombre == tipo_electrodomestico)
     ).scalar_one_or_none()
 
-    if potencia == None:
-        raise ValueError()
+    if potencia is None:
+        raise PotenciaInvalida()
 
     return potencia
 
 
 def calcular_kwh(potencia_w: int, horas_dia: float, dias_semana: int, cantidad: int) -> float:
     """Calcula el consumo mensual en kWh de un electrodoméstico"""
-    return (potencia_w / 1000) * Decimal(str(horas_dia)) * dias_semana * Decimal('4.33') * cantidad
+    return Decimal(str(potencia_w / 1000)) * Decimal(str(horas_dia)) * dias_semana * Decimal('4.33') * cantidad
 
 
 def serializar_electrodomestico(electrodomestico: Electrodomestico) -> dict:
     """Serializa un electrodoméstico en un diccionario para posteriormente ser retornado como JSON"""
     consumo = calcular_kwh(electrodomestico.potencia_w, electrodomestico.horas_dia, electrodomestico.dias_semana, electrodomestico.cantidad)
     return {
-        "id": electrodomestico.id_electrodomestico,
+        "id_electrodomestico": electrodomestico.id_electrodomestico,
         "nombre": electrodomestico.nombre,
         "tipo": electrodomestico.tipo,
         "potencia_w": electrodomestico.potencia_w,
-        "consumo_mensual": consumo,
+        "consumo_mensual": round(consumo, 2),
         "horas_dia": electrodomestico.horas_dia,
         "dias_semana": electrodomestico.dias_semana,
         "cantidad": electrodomestico.cantidad

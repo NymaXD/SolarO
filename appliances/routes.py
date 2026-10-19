@@ -52,6 +52,9 @@ def nuevo_electrodomestico(usuario):
     if not all(isinstance(campo, str) for campo in campos_string):
         return jsonify({"message": "Datos inválidos. Revise nuevamente."}), 422
 
+    if isinstance(data["dias_semana"], bool) or isinstance(data["horas_dia"], bool) or isinstance(data["cantidad"], bool):
+            return jsonify({"message": "Datos inválidos. Revise nuevamente."}), 422
+
     if not all(isinstance(campo, int) for campo in campos_int):
         return jsonify({"message": "Datos inválidos. Revise nuevamente."}), 422
 
@@ -80,8 +83,8 @@ def nuevo_electrodomestico(usuario):
         current_app.logger.exception(f"Error al conectar con la base de datos.")
         return jsonify({"message": "Error de conexión"}), 500
 
-    except ValueError:
-        current_app.logger.exception("Error al obtener potencia del catálogo.")
+    except PotenciaInvalida:
+        current_app.logger.error("Error al obtener potencia del catálogo.")
         return jsonify({"message": "Tipo de electrodoméstico inválido."}), 422
 
     except Exception:
@@ -117,6 +120,9 @@ def editar_electrodomestico(id_, usuario):
 
     if not all(isinstance(campo, str) for campo in campos_string):
         return jsonify({"message": "Datos inválidos. Revise nuevamente."}), 422
+
+    if isinstance(data["dias_semana"], bool) or isinstance(data["horas_dia"], bool) or isinstance(data["cantidad"], bool):
+            return jsonify({"message": "Datos inválidos. Revise nuevamente."}), 422
 
     if not all(isinstance(campo, int) for campo in campos_int):
         return jsonify({"message": "Datos inválidos. Revise nuevamente."}), 422
@@ -159,12 +165,12 @@ def editar_electrodomestico(id_, usuario):
         current_app.logger.exception(f"Error al conectar con la base de datos.")
         return jsonify({"message": "Error de conexión"}), 500
 
-    except ValueError:
-            current_app.logger.exception("Error al obtener potencia del catálogo.")
+    except PotenciaInvalida:
+            current_app.logger.error("Error al obtener potencia del catálogo.")
             return jsonify({"message": "Tipo de electrodoméstico inválido."}), 422
         
     except Exception:
-        current_app.logger.exception(f"Error al actualizar el electrodoméstico {electrodomestico.id_electrodomestico}")
+        current_app.logger.exception(f"Error al actualizar el electrodoméstico {id_}")
         return jsonify({"message": "Error al actualizar el electrodoméstico. Intente nuevamente"}), 500
 
     else:
