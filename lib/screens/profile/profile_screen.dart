@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _email.text = cached.email;
       });
     }
-    final token = await SessionStore.readToken();
+    final token = await SessionStore.validToken();
     if (!mounted || token == null) return;
     try {
       final fresh = await UserService().getMe(token);
@@ -60,7 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _save() async {
     if (!(_form.currentState?.validate() ?? false)) return;
-    final token = await SessionStore.readToken();
+    final token = await SessionStore.validToken();
     if (token == null || token.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('no_session'))));
@@ -83,7 +83,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _changePassword() async {
     if (!(_passForm.currentState?.validate() ?? false)) return;
-    final token = await SessionStore.readToken();
+    // Se guardan y limpian de inmediato (texto + errores) para no confundir.
+    final actual = _current.text;
+    final nueva = _newPass.text;
+    _passForm.currentState?.reset();
+    _current.clear();
+    _newPass.clear();
+    _newPass2.clear();
+    final token = await SessionStore.validToken();
     if (token == null || token.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('no_session'))));
@@ -91,12 +98,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     setState(() => _changing = true);
     try {
-      final msg = await UserService().updatePassword(token: token, actual: _current.text, nueva: _newPass.text);
+      final msg = await UserService().updatePassword(token: token, actual: actual, nueva: nueva);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-      _current.clear();
-      _newPass.clear();
-      _newPass2.clear();
     } on AuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));

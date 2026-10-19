@@ -42,8 +42,20 @@ class AuthUser {
 /// Resultado del login: token JWT + usuario.
 class AuthSession {
   final String accessToken;
+  final String refreshToken;
   final AuthUser user;
-  const AuthSession({required this.accessToken, required this.user});
+  const AuthSession({
+    required this.accessToken,
+    required this.refreshToken,
+    required this.user,
+  });
+}
+
+/// Par de tokens renovados por POST /auth/refresh.
+class RefreshedTokens {
+  final String accessToken;
+  final String refreshToken;
+  const RefreshedTokens({required this.accessToken, required this.refreshToken});
 }
 
 /// Llamadas a POST /auth/login (contrato Backend v1.1).
@@ -73,15 +85,57 @@ class AuthService {
     if (res.statusCode == 200) {
       final body = jsonDecode(res.body) as Map<String, dynamic>;
       final token = body['access_token'] as String?;
+      final refresh = body['refresh_token'] as String?;
       final userJson = body['user'] as Map<String, dynamic>?;
-      if (token == null || token.isEmpty || userJson == null) {
+      if (token == null ||
+          token.isEmpty ||
+          refresh == null ||
+          refresh.isEmpty ||
+          userJson == null) {
         throw AuthException(tr('err_unexpected'));
       }
-      return AuthSession(accessToken: token, user: AuthUser.fromJson(userJson));
+      return AuthSession(
+        accessToken: token,
+        refreshToken: refresh,
+        user: AuthUser.fromJson(userJson),
+      );
     }
 
     // 400/401/422/500: mostrar el "message" del backend tal cual.
     throw AuthException(_backendMessage(res.body));
+  }
+
+  /// Renueva el par de tokens con POST /auth/refresh (Bearer = refresh token).
+  Future<RefreshedTokens> refreshTokens(String refreshToken) async {
+    late http.Response res;
+    try {
+      res = await _client
+          .post(
+            Uri.parse('${ApiConfig.baseUrl}/auth/refresh'),
+            headers: {'Authorization': 'Bearer $refreshToken'},
+          )
+          .timeout(ApiConfig.timeout);
+    } on TimeoutException {
+      throw AuthException(tr('err_timeout'));
+    } on SocketException {
+      throw AuthException(tr('err_noconn'));
+    } on http.ClientException {
+      throw AuthException(tr('err_network'));
+    }
+
+    if (res.statusCode == 200) {
+      final body = jsonDecode(res.body) as Map<String, dynamic>;
+      final token = body['access_token'] as String?;
+      final refresh = body['refresh_token'] as String?;
+      if (token == null ||
+          token.isEmpty ||
+          refresh == null ||
+          refresh.isEmpty) {
+        throw AuthException(tr('err_unexpected'));
+      }
+      return RefreshedTokens(accessToken: token, refreshToken: refresh);
+    }
+    throw AuthException(_backendMessage(res.body), res.statusCode);
   }
 
   /// Registro real contra POST /auth/register.

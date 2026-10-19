@@ -131,7 +131,9 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  // ---------- DESKTOP ----------
+  // ---------- DESKTOP: sidebar colapsable ----------
+  bool _sidebarOpen = true;
+
   Widget _desktopScaffold(List<Widget> pages) {
     final items = [
       (Icons.home_outlined, tr('nav_home')),
@@ -145,35 +147,55 @@ class _AppShellState extends State<AppShell> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Row(
         children: [
-          Container(
-            width: 240,
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            width: _sidebarOpen ? 240 : 76,
             decoration: const BoxDecoration(gradient: AppColors.blueGradient),
             child: SafeArea(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Padding(padding: EdgeInsets.all(20), child: SolarLogo(light: true, fontSize: 24)),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: _sidebarOpen
+                        ? const SolarLogo(light: true, fontSize: 24)
+                        : const Icon(Icons.solar_power_rounded, color: Colors.white, size: 30),
+                  ),
                   for (int i = 0; i < items.length; i++)
                     _sideItem(i, items[i].$1, items[i].$2, i == _index, () => _go(i)),
                   const Spacer(),
                   _sideItem(-1, Icons.logout_rounded, tr('logout'), false, _logout),
-                  const SizedBox(height: 12),
-                  // Dibujo restaurado: casa + paneles solares
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: Opacity(
-                      opacity: 0.9,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.home_rounded, size: 44, color: Colors.white38),
-                          SizedBox(width: 6),
-                          Icon(Icons.solar_power_rounded, size: 56, color: Colors.white54),
-                        ],
+                  if (_sidebarOpen) ...[
+                    const SizedBox(height: 12),
+                    // Dibujo: casa + paneles solares
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Opacity(
+                        opacity: 0.9,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.home_rounded, size: 44, color: Colors.white38),
+                            SizedBox(width: 6),
+                            Icon(Icons.solar_power_rounded, size: 56, color: Colors.white54),
+                          ],
+                        ),
                       ),
                     ),
+                    const SizedBox(height: 8),
+                  ],
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Divider(color: Colors.white24, height: 1),
                   ),
-                  const SizedBox(height: 20),
+                  // Flecha al pie para plegar/desplegar el menú
+                  IconButton(
+                    tooltip: _sidebarOpen ? tr('collapse_menu') : tr('expand_menu'),
+                    onPressed: () => setState(() => _sidebarOpen = !_sidebarOpen),
+                    icon: Icon(_sidebarOpen ? Icons.chevron_left_rounded : Icons.chevron_right_rounded, color: Colors.white70, size: 28),
+                  ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
@@ -183,7 +205,7 @@ class _AppShellState extends State<AppShell> {
               children: [
                 Container(
                   color: context.cardBg,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
                     children: [
                       Text(_titles[_index], style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.tDark)),
@@ -208,22 +230,28 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget _sideItem(int idx, IconData icon, String label, bool selected, VoidCallback onTap) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: Material(
-        color: selected ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: onTap,
-          hoverColor: Colors.white10,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            child: Row(children: [
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      child: _sidebarOpen
+          ? Row(children: [
               Icon(icon, color: selected ? AppColors.accent : Colors.white70, size: 20),
               const SizedBox(width: 10),
-              Text(label, style: TextStyle(color: selected ? Colors.white : Colors.white70, fontWeight: selected ? FontWeight.w800 : FontWeight.w500, fontSize: 13.5)),
-            ]),
+              Expanded(child: Text(label, overflow: TextOverflow.ellipsis, style: TextStyle(color: selected ? Colors.white : Colors.white70, fontWeight: selected ? FontWeight.w800 : FontWeight.w500, fontSize: 13.5))),
+            ])
+          : Center(child: Icon(icon, color: selected ? AppColors.accent : Colors.white70, size: 22)),
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      child: Tooltip(
+        message: _sidebarOpen ? '' : label,
+        child: Material(
+          color: selected ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: onTap,
+            hoverColor: Colors.white10,
+            child: content,
           ),
         ),
       ),

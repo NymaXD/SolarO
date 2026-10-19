@@ -26,14 +26,16 @@ class _SkeletonBoxState extends State<SkeletonBox> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _a,
-      child: Container(
-        width: widget.width,
-        height: widget.height,
-        decoration: BoxDecoration(
-          color: widget.dark ? Colors.white24 : const Color(0xFFE2E8F5),
-          borderRadius: BorderRadius.circular(widget.radius),
+    return ExcludeSemantics(
+      child: FadeTransition(
+        opacity: _a,
+        child: Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            color: widget.dark ? Colors.white24 : const Color(0xFFE2E8F5),
+            borderRadius: BorderRadius.circular(widget.radius),
+          ),
         ),
       ),
     );

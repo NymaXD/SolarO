@@ -57,7 +57,7 @@ class _LearnScreenState extends State<LearnScreen> {
             children: [
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 const SolarLogo(light: true, fontSize: 22),
-                IconButton(onPressed: () {}, icon: const Icon(Icons.menu_rounded, color: Colors.white)),
+                IconButton(tooltip: tr('expand_menu'), onPressed: () => Scaffold.of(context).openDrawer(), icon: const Icon(Icons.menu_rounded, color: Colors.white)),
               ]),
               const SizedBox(height: 12),
               Center(child: Text(tr('learn_title'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18))),

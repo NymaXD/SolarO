@@ -43,7 +43,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 Text(tr('fb_sub'), style: TextStyle(color: context.tMed, fontSize: 13)),
                 const SizedBox(height: 16),
                 Text(tr('rating'), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: context.tDark)),
-                Row(children: [for (int i = 1; i <= 5; i++) IconButton(onPressed: () => setState(() => _stars = i), icon: Icon(i <= _stars ? Icons.star_rounded : Icons.star_outline_rounded, color: AppColors.accent, size: 28))]),
+                Row(children: [for (int i = 1; i <= 5; i++) IconButton(tooltip: '${tr('rating')} $i/5', onPressed: () => setState(() => _stars = i), icon: Icon(i <= _stars ? Icons.star_rounded : Icons.star_outline_rounded, color: AppColors.accent, size: 28))]),
                 const SizedBox(height: 8),
                 SolarTextField(controller: _msg, label: tr('comment_label'), hint: tr('comment_hint'), prefix: Icons.message_outlined, validator: (v) => v == null || v.trim().isEmpty ? tr('v_comment') : null),
                 const SizedBox(height: 16),

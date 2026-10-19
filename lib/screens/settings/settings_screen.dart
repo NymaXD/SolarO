@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/settings_store.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/lang.dart';
+import '../privacy_screen.dart';
 
 /// Configuración funcional: idioma, tema oscuro y notificaciones.
 /// Todo persiste en el dispositivo (shared_preferences) y se aplica al instante.
@@ -53,6 +54,12 @@ class SettingsScreen extends StatelessWidget {
                     if (v != null) settings.setLang(v);
                   },
                 ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.privacy_tip_outlined),
+                title: Text(tr('privacy_title')),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PrivacyScreen())),
               ),
               const Divider(),
               Padding(padding: const EdgeInsets.all(16), child: Text(tr('set_note'), style: const TextStyle(color: AppColors.textMedium, fontSize: 12))),

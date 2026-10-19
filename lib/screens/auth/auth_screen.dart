@@ -96,10 +96,25 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     final emailCtrl = TextEditingController(text: _email.text);
     final formKey = GlobalKey<FormState>();
     bool sending = false;
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDlg) => AlertDialog(
+    late StatefulBuilder dialog;
+    dialog = StatefulBuilder(
+      builder: (ctx, setDlg) {
+        Future<void> submit() async {
+          if (!(formKey.currentState?.validate() ?? false)) return;
+          setDlg(() => sending = true);
+          try {
+            final msg = await AuthService().forgotPassword(email: emailCtrl.text);
+            if (!ctx.mounted || !mounted) return;
+            Navigator.pop(ctx);
+            messenger.showSnackBar(SnackBar(content: Text(msg)));
+          } on AuthException catch (e) {
+            if (!ctx.mounted || !mounted) return;
+            setDlg(() => sending = false);
+            messenger.showSnackBar(SnackBar(content: Text(e.message)));
+          }
+        }
+
+        return AlertDialog(
           title: Text(tr('forgot_title')),
           content: Form(
             key: formKey,
@@ -111,6 +126,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 TextFormField(
                   controller: emailCtrl,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.send,
+                  onFieldSubmitted: (_) => submit(),
                   decoration: const InputDecoration(hintText: 'correo@ejemplo.com', prefixIcon: Icon(Icons.email_outlined)),
                   validator: SolarValidators.email,
                   autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -121,30 +138,16 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           actions: [
             TextButton(onPressed: sending ? null : () => Navigator.pop(ctx), child: Text(tr('cancel'))),
             ElevatedButton(
-              onPressed: sending
-                  ? null
-                  : () async {
-                      if (!(formKey.currentState?.validate() ?? false)) return;
-                      setDlg(() => sending = true);
-                      try {
-                        final msg = await AuthService().forgotPassword(email: emailCtrl.text);
-                        if (!ctx.mounted || !mounted) return;
-                        Navigator.pop(ctx);
-                        messenger.showSnackBar(SnackBar(content: Text(msg)));
-                      } on AuthException catch (e) {
-                        if (!ctx.mounted || !mounted) return;
-                        setDlg(() => sending = false);
-                        messenger.showSnackBar(SnackBar(content: Text(e.message)));
-                      }
-                    },
+              onPressed: sending ? null : submit,
               child: sending
                   ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2.5))
                   : Text(tr('send')),
             ),
           ],
-        ),
-      ),
-    ).then((_) => emailCtrl.dispose());
+        );
+      },
+    );
+    showDialog(context: context, builder: (_) => dialog).then((_) => emailCtrl.dispose());
   }
 
   @override

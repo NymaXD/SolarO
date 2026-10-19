@@ -64,13 +64,14 @@ class AppColors {
   );
 }
 
-/// Atajos según brillo actual. Úsalos en vez de colores fijos claros
-/// para que todo se lea bien en modo claro Y oscuro.
-extension DarkX on BuildContext {
+/// Extensión para obtener colores del tema activo (claro/oscuro) desde el contexto.
+extension BuildContextX on BuildContext {
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
-  Color get tDark => isDark ? AppColors.textWhite : AppColors.textDark;
-  Color get tMed => isDark ? AppColors.mutedDark : AppColors.textMedium;
-  Color get cardBg => isDark ? AppColors.surfaceDark : Colors.white;
-  Color get border => isDark ? AppColors.borderDark : AppColors.divider;
-  Color get inputBg => isDark ? AppColors.surfaceDark2 : Colors.white;
+  Color get tDark => Theme.of(this).textTheme.bodyLarge?.color ?? AppColors.textDark;
+  Color get tMed => Theme.of(this).textTheme.bodyMedium?.color ?? AppColors.textMedium;
+  Color get border => Theme.of(this).dividerTheme.color ?? AppColors.divider;
+  Color get inputBg => Theme.of(this).inputDecorationTheme.fillColor ?? Colors.white;
+  Color get cardBg => Theme.of(this).cardTheme.color ?? Colors.white;
 }
+
+
