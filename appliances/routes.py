@@ -190,7 +190,7 @@ def editar_electrodomestico(id_):
 
 @appliances.route("/appliances/<int:id_>", methods=["DELETE"])
 @jwt_required
-def eliminar_electrodomestico(id_, usuario):
+def eliminar_electrodomestico(id_):
 
     # --- Validar que el token sea de sesión ---
     if get_jwt().get("purpose") != "session":
