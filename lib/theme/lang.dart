@@ -109,6 +109,7 @@ class AppLang {
     'learn_lesson_pending': {'es': 'Pendiente', 'en': 'Pending'},
     'learn_video': {'es': 'Video', 'en': 'Video'},
     'learn_reading': {'es': 'Lectura', 'en': 'Reading'},
+    'learn_read': {'es': 'Leer', 'en': 'Read'},
     'learn_mark_done': {'es': 'Marcar como completado', 'en': 'Mark as completed'},
     'learn_level_complete': {'es': '¡Nivel completado!', 'en': 'Level completed!'},
     'learn_back': {'es': 'Volver a módulos', 'en': 'Back to modules'},

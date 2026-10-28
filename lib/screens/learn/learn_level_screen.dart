@@ -229,8 +229,40 @@ class _LessonCardState extends State<_LessonCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Botón de completado arriba del video (los iframes se
-                  // dibujan encima de Flutter, así que el botón debe ir antes).
+                  // Contenido primero: lectura o video embebido.
+                  if (l.isVideo && l.youtubeId != null) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: buildYoutubeEmbed(l.youtubeId!),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      tr('learn_video_note'),
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: isDark ? AppColors.mutedDark : AppColors.textMedium,
+                      ),
+                    ),
+                  ] else if (l.contenido != null)
+                    ElevatedButton.icon(
+                      onPressed: () => _showReadingPopup(context, l.contenido!),
+                      icon: const Icon(Icons.menu_book_rounded, size: 18),
+                      label: Text(tr('learn_read'),
+                          style: const TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w800)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+
+                  // Después del contenido: marcar como completado.
                   Row(
                     children: [
                       Expanded(
@@ -281,39 +313,6 @@ class _LessonCardState extends State<_LessonCard> {
                       ],
                     ],
                   ),
-                  const SizedBox(height: 12),
-
-                  // Contenido: texto de lectura o video embebido
-                  if (l.isVideo && l.youtubeId != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: buildYoutubeEmbed(l.youtubeId!),
-                    )
-                  else if (l.contenido != null)
-                    ElevatedButton.icon(
-                      onPressed: () => _showReadingPopup(context, l.contenido!),
-                      icon: const Icon(Icons.open_in_full, color: AppColors.primary),
-                      label: Text('Leer', style: TextStyle(color: AppColors.primary)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryLight,
-                        foregroundColor: AppColors.onPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-
-                  if (l.isVideo && l.youtubeId != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      tr('learn_video_note'),
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: isDark ? AppColors.mutedDark : AppColors.textMedium,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
