@@ -79,11 +79,14 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        title: Text(_titles[_index], style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
         elevation: 0,
+        flexibleSpace: const DecoratedBox(
+          decoration: BoxDecoration(gradient: AppColors.blueGradient),
+        ),
+        title: Text(_titles[_index], style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
         actions: [
           IconButton(tooltip: tr('notifs'), onPressed: () => NotificationsPanel.show(context), icon: const Icon(Icons.notifications_none_rounded, color: Colors.white)),
           AccountMenuButton(
