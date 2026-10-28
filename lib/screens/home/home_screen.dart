@@ -96,53 +96,61 @@ class _HomeScreenState extends State<HomeScreen> {
   // ---------- MÓVIL ----------
   Widget _mobile(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(gradient: AppColors.blueGradient),
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SolarLogo(light: true, fontSize: 22),
+            const SolarLogo(fontSize: 22),
             const SizedBox(height: 12),
-            Text(tr('consumption'), style: const TextStyle(color: Colors.white70, fontSize: 14)),
+            Text(tr('consumption'), style: TextStyle(color: context.tMed, fontSize: 14)),
             Text(
               _total > 0 ? '${_total.toStringAsFixed(1)} kWh' : '-- kWh',
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white),
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: context.tDark),
             ),
             const SizedBox(height: 4),
             Text(
               _total > 0 ? '${_items.length} ${tr('appliances').toLowerCase()}' : tr('no_consumption'),
-              style: const TextStyle(color: Colors.white60, fontSize: 12),
+              style: TextStyle(color: context.tMed, fontSize: 12),
             ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white24)),
+              decoration: BoxDecoration(
+                color: context.cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: context.border),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(tr('monthly'), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  Text(tr('monthly'), style: TextStyle(color: context.tMed, fontSize: 12)),
                   const SizedBox(height: 8),
                   _loading
-                      ? const ChartSkeleton(dark: true, height: 160)
+                      ? const ChartSkeleton(height: 160)
                       : (_items.isEmpty
-                          ? const EmptyChartBox(dark: true, height: 160)
-                          : _BarChart(items: _items, dark: true, height: 160)),
+                          ? const EmptyChartBox(height: 160)
+                          : _BarChart(items: _items, height: 160)),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            Text(tr('appliances'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+            Text(tr('appliances'),
+                style: TextStyle(color: context.tDark, fontWeight: FontWeight.w800, fontSize: 15)),
             const SizedBox(height: 8),
             if (_loading)
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(16)),
-                child: const AppliancesSkeleton(dark: true),
+                decoration: BoxDecoration(
+                  color: context.cardBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: context.border),
+                ),
+                child: const AppliancesSkeleton(),
               )
             else if (_items.isEmpty)
               EmptyState(
-                dark: true,
                 icon: Icons.kitchen_outlined,
                 title: tr('no_appliances'),
                 subtitle: tr('no_appliances_sub'),
@@ -156,7 +164,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   for (var i = 0; i < _items.length; i++)
                     ApplianceItem(
-                      dark: true,
                       item: Appliance(
                         _items[i].name,
                         '${_items[i].kwhMonth.toStringAsFixed(1)} kWh',
@@ -297,13 +304,12 @@ class _HomeScreenState extends State<HomeScreen> {
 /// Gráfico de barras verticales de consumo mensual por electrodoméstico.
 class _BarChart extends StatelessWidget {
   final List<ApplianceItemData> items;
-  final bool dark;
   final double height;
-  const _BarChart({required this.items, this.dark = false, this.height = 180});
+  const _BarChart({required this.items, this.height = 180});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = dark || context.isDark;
+    final isDark = context.isDark;
     final maxKwh = items.fold<double>(0, (a, e) => e.kwhMonth > a ? e.kwhMonth : a);
     final textColor = isDark ? Colors.white : AppColors.textDark;
     final subColor = isDark ? Colors.white70 : AppColors.textMedium;

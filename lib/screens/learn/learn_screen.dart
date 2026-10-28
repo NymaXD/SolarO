@@ -87,7 +87,7 @@ class _LearnScreenState extends State<LearnScreen> {
 
   Widget _mobile(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(gradient: AppColors.blueGradient),
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -96,23 +96,21 @@ class _LearnScreenState extends State<LearnScreen> {
             children: [
               Center(
                 child: Text(tr('learn_title'),
-                    style: const TextStyle(
-                        color: Colors.white,
+                    style: TextStyle(
+                        color: context.tDark,
                         fontWeight: FontWeight.w900,
                         fontSize: 18)),
               ),
               Center(
                 child: Text(tr('learn_sub'),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        color: Colors.white70, fontSize: 12.5)),
+                    style: TextStyle(color: context.tMed, fontSize: 12.5)),
               ),
               const SizedBox(height: 14),
               if (_loading)
-                const LearnListSkeleton(dark: true)
+                const LearnListSkeleton()
               else if (_levels.isEmpty)
                 EmptyState(
-                  dark: true,
                   icon: Icons.school_outlined,
                   title: tr('no_modules'),
                   subtitle: tr('no_modules_sub'),
