@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/lang.dart';
 import '../theme/responsive.dart';
@@ -78,10 +79,20 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(_titles[_index], style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: context.tDark)),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        title: Text(_titles[_index], style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
+        elevation: 0,
         actions: [
-          IconButton(tooltip: tr('notifs'), onPressed: () => NotificationsPanel.show(context), icon: const Icon(Icons.notifications_none_rounded)),
-          AccountMenuButton(onProfile: () => _go(4), onLogout: _logout),
+          IconButton(tooltip: tr('notifs'), onPressed: () => NotificationsPanel.show(context), icon: const Icon(Icons.notifications_none_rounded, color: Colors.white)),
+          AccountMenuButton(
+            onProfile: () => _go(4),
+            onLogout: _logout,
+            iconColor: Colors.white,
+            avatarBackground: Colors.white,
+            avatarForeground: AppColors.primary,
+          ),
           const SizedBox(width: 8),
         ],
       ),

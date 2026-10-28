@@ -10,7 +10,16 @@ class AccountMenuButton extends StatelessWidget {
   final VoidCallback onProfile;
   final VoidCallback onLogout;
   final Color iconColor;
-  const AccountMenuButton({super.key, required this.onProfile, required this.onLogout, this.iconColor = AppColors.textDark});
+  final Color? avatarBackground;
+  final Color? avatarForeground;
+  const AccountMenuButton({
+    super.key,
+    required this.onProfile,
+    required this.onLogout,
+    this.iconColor = AppColors.textDark,
+    this.avatarBackground,
+    this.avatarForeground,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +32,15 @@ class AccountMenuButton extends StatelessWidget {
           tooltip: tr('nav_profile'),
           icon: user == null
               ? Icon(Icons.account_circle_outlined, color: iconColor)
-              : CircleAvatar(radius: 14, backgroundColor: AppColors.primary, child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13))),
+              : CircleAvatar(
+                  radius: 14,
+                  backgroundColor: avatarBackground ?? AppColors.primary,
+                  child: Text(initial,
+                      style: TextStyle(
+                          color: avatarForeground ?? Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13)),
+                ),
           onSelected: (v) {
             if (v == 'profile') onProfile();
             if (v == 'logout') onLogout();
