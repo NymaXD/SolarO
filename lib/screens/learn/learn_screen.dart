@@ -6,7 +6,6 @@ import '../../theme/responsive.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/learn_progress_bar.dart';
 import '../../widgets/skeletons.dart';
-import '../../widgets/solar_logo.dart';
 import 'learn_level.dart';
 import 'learn_level_screen.dart';
 
@@ -95,18 +94,6 @@ class _LearnScreenState extends State<LearnScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const SolarLogo(light: true, fontSize: 22),
-                  IconButton(
-                    tooltip: tr('expand_menu'),
-                    onPressed: () => Scaffold.of(context).openDrawer(),
-                    icon: const Icon(Icons.menu_rounded, color: Colors.white),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
               Center(
                 child: Text(tr('learn_title'),
                     style: const TextStyle(
