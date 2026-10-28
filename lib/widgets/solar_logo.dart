@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
-/// Logo SolarO: icono sol + panel + texto. `light=true` para fondos azules.
+/// Logo SolarO con icono (sidebar y drawer). `light=true` para fondos azules.
 class SolarLogo extends StatelessWidget {
   final bool light;
   final double iconSize;

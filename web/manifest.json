@@ -1,11 +1,11 @@
 {
-    "name": "solar_o",
-    "short_name": "solar_o",
+    "name": "SolarO",
+    "short_name": "SolarO",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#1B3BBB",
+    "theme_color": "#1B3BBB",
+    "description": "Aprende energía solar, monitorea tu consumo y simula tu sistema fotovoltaico.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

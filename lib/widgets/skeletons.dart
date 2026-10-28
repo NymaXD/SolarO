@@ -77,22 +77,34 @@ class ChartSkeleton extends StatelessWidget {
   }
 }
 
-/// Skeleton de lista de electrodomésticos (círculos).
+/// Skeleton de lista de electrodomésticos (filas verticales, igual al
+/// `_AppliancesSummary` cargado: leading + título + subtítulo + kWh).
 class AppliancesSkeleton extends StatelessWidget {
   final bool dark;
   const AppliancesSkeleton({super.key, this.dark = false});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        for (int i = 0; i < 5; i++)
-          Expanded(
-            child: Column(
+        for (int i = 0; i < 4; i++)
+          Padding(
+            padding: EdgeInsets.only(bottom: i < 3 ? 10 : 0),
+            child: Row(
               children: [
-                SkeletonBox(height: 56, width: 56, radius: 28, dark: dark),
-                const SizedBox(height: 6),
-                SkeletonBox(height: 10, width: 48, radius: 4, dark: dark),
+                SkeletonBox(height: 36, width: 36, radius: 18, dark: dark),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SkeletonBox(height: 12, width: 130, radius: 4, dark: dark),
+                      const SizedBox(height: 5),
+                      SkeletonBox(height: 10, width: 90, radius: 4, dark: dark),
+                    ],
+                  ),
+                ),
+                SkeletonBox(height: 12, width: 52, radius: 4, dark: dark),
               ],
             ),
           ),

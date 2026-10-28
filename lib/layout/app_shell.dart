@@ -78,7 +78,7 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const SolarLogo(fontSize: 20),
+        title: const Text('SolarO Aprende', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white),),
         actions: [
           IconButton(tooltip: tr('notifs'), onPressed: () => NotificationsPanel.show(context), icon: const Icon(Icons.notifications_none_rounded)),
           AccountMenuButton(onProfile: () => _go(4), onLogout: _logout),
@@ -208,7 +208,8 @@ class _AppShellState extends State<AppShell> {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
                     children: [
-                      Text(_titles[_index], style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.tDark)),
+                      Text('SolarO', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: context.tDark)),
+                      const SizedBox(width: 12),
                       const Spacer(),
                       IconButton(tooltip: tr('notifs'), onPressed: () => NotificationsPanel.show(context), icon: Icon(Icons.notifications_none_rounded, color: context.tDark)),
                       AccountMenuButton(onProfile: () => _go(4), onLogout: _logout),
