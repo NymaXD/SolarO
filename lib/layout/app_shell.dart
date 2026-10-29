@@ -218,14 +218,20 @@ class _AppShellState extends State<AppShell> {
             child: Column(
               children: [
                 Container(
-                  color: context.cardBg,
+                  decoration: const BoxDecoration(gradient: AppColors.blueGradient),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
                     children: [
-                      Text(_titles[_index], style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: context.tDark)),
+                      Text(_titles[_index], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
                       const Spacer(),
-                      IconButton(tooltip: tr('notifs'), onPressed: () => NotificationsPanel.show(context), icon: Icon(Icons.notifications_none_rounded, color: context.tDark)),
-                      AccountMenuButton(onProfile: () => _go(4), onLogout: _logout),
+                      IconButton(tooltip: tr('notifs'), onPressed: () => NotificationsPanel.show(context), icon: const Icon(Icons.notifications_none_rounded, color: Colors.white)),
+                      AccountMenuButton(
+                        onProfile: () => _go(4),
+                        onLogout: _logout,
+                        iconColor: Colors.white,
+                        avatarBackground: Colors.white,
+                        avatarForeground: AppColors.primary,
+                      ),
                     ],
                   ),
                 ),

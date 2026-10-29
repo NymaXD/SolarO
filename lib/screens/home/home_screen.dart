@@ -158,20 +158,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 onAction: _openAppliances,
               )
             else
-              Wrap(
-                spacing: 14,
-                runSpacing: 12,
-                children: [
-                  for (var i = 0; i < _items.length; i++)
-                    ApplianceItem(
-                      item: Appliance(
-                        _items[i].name,
-                        '${_items[i].kwhMonth.toStringAsFixed(1)} kWh',
-                        _iconForTipo(_items[i].tipo),
-                        _tileColors[i % _tileColors.length],
-                      ),
-                    ),
-                ],
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 210),
+                child: SingleChildScrollView(
+                  child: Wrap(
+                    spacing: 14,
+                    runSpacing: 12,
+                    children: [
+                      for (var i = 0; i < _items.length; i++)
+                        ApplianceItem(
+                          item: Appliance(
+                            _items[i].name,
+                            '${_items[i].kwhMonth.toStringAsFixed(1)} kWh',
+                            _iconForTipo(_items[i].tipo),
+                            _tileColors[i % _tileColors.length],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             const SizedBox(height: 14),
             SolarCtaCard(title: tr('learn_cta'), icon: Icons.school_outlined, onTap: () => _go(1)),
@@ -310,67 +315,81 @@ class _BarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.isDark;
+    if (items.isEmpty) return SizedBox(height: height);
     final maxKwh = items.fold<double>(0, (a, e) => e.kwhMonth > a ? e.kwhMonth : a);
     final textColor = isDark ? Colors.white : AppColors.textDark;
     final subColor = isDark ? Colors.white70 : AppColors.textMedium;
-    final shown = items.length > 8 ? items.take(8).toList() : items;
 
     return SizedBox(
       height: height,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < shown.length; i++)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      shown[i].kwhMonth.toStringAsFixed(1),
-                      style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: textColor),
-                    ),
-                    const SizedBox(height: 3),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: FractionallySizedBox(
-                          heightFactor: maxKwh > 0
-                              ? (shown[i].kwhMonth / maxKwh).clamp(0.06, 1.0)
-                              : 0.06,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [Color(0xFFFFD54D), AppColors.accent],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Hasta 8 elementos se reparten el ancho; con más, cada barra
+          // mantiene un ancho fijo y la gráfica se desplaza en horizontal.
+          final barWidth = items.length <= 8
+              ? constraints.maxWidth / items.length
+              : 64.0;
+
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var i = 0; i < items.length; i++)
+                  SizedBox(
+                    width: barWidth,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            items[i].kwhMonth.toStringAsFixed(1),
+                            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: textColor),
+                          ),
+                          const SizedBox(height: 3),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.bottomCenter,
+                              child: FractionallySizedBox(
+                                heightFactor: maxKwh > 0
+                                    ? (items[i].kwhMonth / maxKwh).clamp(0.06, 1.0)
+                                    : 0.06,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [Color(0xFFFFD54D), AppColors.accent],
+                                    ),
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                                  ),
+                                ),
                               ),
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 5),
+                          Icon(
+                            _iconForTipo(items[i].tipo),
+                            size: 16,
+                            color: isDark ? Colors.white70 : AppColors.primary,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            items[i].name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 9.5, color: subColor),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 5),
-                    Icon(
-                      _iconForTipo(shown[i].tipo),
-                      size: 16,
-                      color: isDark ? Colors.white70 : AppColors.primary,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      shown[i].name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 9.5, color: subColor),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+              ],
             ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -404,16 +423,26 @@ class _AppliancesSummary extends StatelessWidget {
                 onAction: onOpen,
               )
             else ...[
-              for (var i = 0; i < items.length; i++)
-                ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: ApplianceTypeIcon(
-                      tipo: items[i].tipo, index: i, radius: 18, iconSize: 18),
-                  title: Text('${items[i].name} x${items[i].quantity}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
-                  subtitle: Text(items[i].tipo, style: TextStyle(fontSize: 12, color: context.tMed)),
-                  trailing: Text('${items[i].kwhMonth.toStringAsFixed(1)} kWh', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: context.isDark ? Colors.white : AppColors.primaryDark)),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 300),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (var i = 0; i < items.length; i++)
+                        ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: ApplianceTypeIcon(
+                              tipo: items[i].tipo, index: i, radius: 18, iconSize: 18),
+                          title: Text('${items[i].name} x${items[i].quantity}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                          subtitle: Text(items[i].tipo, style: TextStyle(fontSize: 12, color: context.tMed)),
+                          trailing: Text('${items[i].kwhMonth.toStringAsFixed(1)} kWh', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: context.isDark ? Colors.white : AppColors.primaryDark)),
+                        ),
+                    ],
+                  ),
                 ),
+              ),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
