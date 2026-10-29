@@ -79,7 +79,8 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.primary,
+        surfaceTintColor: Colors.transparent,
         foregroundColor: Colors.white,
         systemOverlayStyle: SystemUiOverlayStyle.light,
         elevation: 0,
@@ -133,14 +134,37 @@ class _AppShellState extends State<AppShell> {
         duration: const Duration(milliseconds: 250),
         child: KeyedSubtree(key: ValueKey(_index), child: pages[_index]),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: bottomIndex,
-        onDestinationSelected: _go,
-        destinations: [
-          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home_rounded), label: tr('nav_home')),
-          NavigationDestination(icon: const Icon(Icons.school_outlined), selectedIcon: const Icon(Icons.school_rounded), label: tr('nav_learn')),
-          NavigationDestination(icon: const Icon(Icons.calculate_outlined), selectedIcon: const Icon(Icons.calculate_rounded), label: tr('nav_sim')),
-        ],
+      bottomNavigationBar: DecoratedBox(
+        decoration: const BoxDecoration(gradient: AppColors.blueGradient),
+        child: NavigationBarTheme(
+          data: NavigationBarThemeData(
+            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            indicatorColor: Colors.white.withValues(alpha: 0.18),
+            iconTheme: WidgetStateProperty.resolveWith(
+              (states) => IconThemeData(
+                color: states.contains(WidgetState.selected) ? Colors.white : Colors.white70,
+              ),
+            ),
+            labelTextStyle: WidgetStateProperty.resolveWith(
+              (states) => TextStyle(
+                fontSize: 12,
+                fontWeight: states.contains(WidgetState.selected) ? FontWeight.w800 : FontWeight.w600,
+                color: states.contains(WidgetState.selected) ? Colors.white : Colors.white70,
+              ),
+            ),
+          ),
+          child: NavigationBar(
+            selectedIndex: bottomIndex,
+            onDestinationSelected: _go,
+            destinations: [
+              NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home_rounded), label: tr('nav_home')),
+              NavigationDestination(icon: const Icon(Icons.school_outlined), selectedIcon: const Icon(Icons.school_rounded), label: tr('nav_learn')),
+              NavigationDestination(icon: const Icon(Icons.calculate_outlined), selectedIcon: const Icon(Icons.calculate_rounded), label: tr('nav_sim')),
+            ],
+          ),
+        ),
       ),
     );
   }

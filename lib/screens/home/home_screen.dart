@@ -158,15 +158,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 onAction: _openAppliances,
               )
             else
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 210),
-                child: SingleChildScrollView(
-                  child: Wrap(
-                    spacing: 14,
-                    runSpacing: 12,
-                    children: [
-                      for (var i = 0; i < _items.length; i++)
-                        ApplianceItem(
+              SizedBox(
+                height: 112,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // 5 iconos visibles; el resto se navega con scroll horizontal.
+                    final itemWidth = (constraints.maxWidth - 32) / 5;
+                    return ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _items.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                      itemBuilder: (context, i) => SizedBox(
+                        width: itemWidth,
+                        child: ApplianceItem(
                           item: Appliance(
                             _items[i].name,
                             '${_items[i].kwhMonth.toStringAsFixed(1)} kWh',
@@ -174,8 +178,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             _tileColors[i % _tileColors.length],
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ),
             const SizedBox(height: 14),
@@ -324,23 +329,24 @@ class _BarChart extends StatelessWidget {
       height: height,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Hasta 8 elementos se reparten el ancho; con más, cada barra
-          // mantiene un ancho fijo y la gráfica se desplaza en horizontal.
-          final barWidth = items.length <= 8
-              ? constraints.maxWidth / items.length
-              : 64.0;
+          // Barras de ancho fijo: si no caben, la gráfica se desplaza en
+          // horizontal (mismo comportamiento en celular y PC).
+          const barWidth = 96.0;
 
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (var i = 0; i < items.length; i++)
-                  SizedBox(
-                    width: barWidth,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 5),
-                      child: Column(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < items.length; i++)
+                    SizedBox(
+                      width: barWidth,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        child: Column(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           Text(
@@ -386,7 +392,8 @@ class _BarChart extends StatelessWidget {
                       ),
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
           );
         },
