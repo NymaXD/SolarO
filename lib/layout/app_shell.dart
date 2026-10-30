@@ -8,6 +8,7 @@ import '../screens/auth/auth_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/learn/learn_screen.dart';
 import '../screens/simulator/simulator_screen.dart';
+import '../screens/faq_screen.dart';
 import '../screens/feedback/feedback_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/settings/settings_screen.dart';
@@ -136,6 +137,15 @@ class _AppShellState extends State<AppShell> {
                     _go(i);
                   },
                 ),
+              ListTile(
+                leading: const Icon(Icons.help_outline_rounded),
+                title: Text(tr('faq_title')),
+                onTap: () {
+                  final nav = Navigator.of(context);
+                  nav.pop();
+                  nav.push(MaterialPageRoute(builder: (_) => const FaqScreen()));
+                },
+              ),
               const Divider(),
               ListTile(leading: const Icon(Icons.logout_rounded, color: AppColors.error), title: Text(tr('logout')), onTap: () {
                 Navigator.pop(context);
@@ -220,6 +230,8 @@ class _AppShellState extends State<AppShell> {
                   ),
                   for (int i = 0; i < items.length; i++)
                     _sideItem(i, items[i].$1, items[i].$2, i == _index, () => _go(i)),
+                  _sideItem(-1, Icons.help_outline_rounded, tr('faq_title'), false,
+                      () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FaqScreen()))),
                   const Spacer(),
                   _sideItem(-1, Icons.logout_rounded, tr('logout'), false, _logout),
                   if (_sidebarOpen) ...[

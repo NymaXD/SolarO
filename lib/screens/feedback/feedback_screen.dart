@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/pqrs_store.dart';
 import '../../theme/app_colors.dart';
+import '../faq_screen.dart';
 import '../../theme/lang.dart';
 import '../../widgets/solar_buttons.dart';
 import '../../widgets/solar_text_field.dart';
@@ -101,6 +102,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               _formCard(),
               const SizedBox(height: 12),
               _historyCard(),
+              const SizedBox(height: 12),
+              _helpCard(),
             ],
           ),
         );
@@ -289,6 +292,27 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 _entryTile(store.entries[i]),
               ],
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _helpCard() {
+    final primary = context.isDark ? AppColors.primaryBright : AppColors.primary;
+    return Card(
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        leading: Icon(Icons.help_outline_rounded, color: primary),
+        title: Text(tr('faq_help_title'),
+            style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+                color: context.tDark)),
+        subtitle: Text(tr('faq_help_sub'),
+            style: TextStyle(fontSize: 12.5, color: context.tMed)),
+        trailing: Icon(Icons.chevron_right_rounded, color: context.tMed),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const FaqScreen()),
         ),
       ),
     );

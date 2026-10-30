@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/settings_store.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/lang.dart';
+import '../faq_screen.dart';
 import '../privacy_screen.dart';
 
 /// Configuración funcional: idioma, tema oscuro y notificaciones.
@@ -54,6 +55,13 @@ class SettingsScreen extends StatelessWidget {
                     if (v != null) settings.setLang(v);
                   },
                 ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.help_outline_rounded),
+                title: Text(tr('faq_title')),
+                subtitle: Text(tr('faq_help_sub')),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FaqScreen())),
               ),
               ListTile(
                 leading: const Icon(Icons.privacy_tip_outlined),
