@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../services/pqrs_store.dart';
+import '../../services/session_store.dart';
 import '../../theme/app_colors.dart';
-import '../faq_screen.dart';
 import '../../theme/lang.dart';
 import '../../widgets/solar_buttons.dart';
 import '../../widgets/solar_text_field.dart';
+import '../faq_screen.dart';
 
 /// PQRS: peticiones, quejas, reclamos y sugerencias.
 ///
@@ -20,6 +21,8 @@ class FeedbackScreen extends StatefulWidget {
 
 class _FeedbackScreenState extends State<FeedbackScreen> {
   final _form = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  final _email = TextEditingController();
   final _subject = TextEditingController();
   final _msg = TextEditingController();
   String _type = 'petition';
@@ -32,10 +35,23 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   void initState() {
     super.initState();
     PqrsStore.instance.load();
+    _loadUser();
+  }
+
+  /// Prellena nombre y correo con los datos de la cuenta.
+  Future<void> _loadUser() async {
+    final user = await SessionStore.readUser();
+    if (!mounted || user == null) return;
+    setState(() {
+      if (_name.text.isEmpty) _name.text = user.nombre;
+      if (_email.text.isEmpty) _email.text = user.email;
+    });
   }
 
   @override
   void dispose() {
+    _name.dispose();
+    _email.dispose();
     _subject.dispose();
     _msg.dispose();
     super.dispose();
@@ -70,6 +86,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     try {
       final entry = await PqrsStore.instance.add(
         type: _type,
+        name: _name.text.trim(),
+        email: _email.text.trim().toLowerCase(),
         subject: _subject.text.trim(),
         message: _msg.text.trim(),
         rating: _stars,
@@ -161,6 +179,25 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                       ),
                     ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              SolarTextField(
+                controller: _name,
+                label: tr('pqrs_name'),
+                hint: tr('pqrs_name_hint'),
+                prefix: Icons.person_outline_rounded,
+                textInputAction: TextInputAction.next,
+                validator: SolarValidators.personName,
+              ),
+              const SizedBox(height: 16),
+              SolarTextField(
+                controller: _email,
+                label: tr('pqrs_email'),
+                hint: tr('pqrs_email_hint'),
+                prefix: Icons.mail_outline_rounded,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                validator: SolarValidators.email,
               ),
               const SizedBox(height: 16),
               SolarTextField(
@@ -366,6 +403,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 fontWeight: FontWeight.w800,
                 fontSize: 13.5,
                 color: context.tDark)),
+        if (e.name.isNotEmpty || e.email.isNotEmpty) ...[
+          const SizedBox(height: 3),
+          _meta(
+            Icons.person_outline_rounded,
+            [e.name, e.email].where((s) => s.isNotEmpty).join(' · '),
+          ),
+        ],
         const SizedBox(height: 2),
         Text(e.message,
             maxLines: 2,

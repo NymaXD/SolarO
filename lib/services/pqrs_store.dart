@@ -13,6 +13,8 @@ import 'session_store.dart';
 class PqrsEntry {
   final String radicado;
   final String type; // petition | complaint | claim | suggestion
+  final String name;
+  final String email;
   final String subject;
   final String message;
   final int rating; // 0 = sin calificación
@@ -22,6 +24,8 @@ class PqrsEntry {
   const PqrsEntry({
     required this.radicado,
     required this.type,
+    required this.name,
+    required this.email,
     required this.subject,
     required this.message,
     required this.rating,
@@ -32,6 +36,8 @@ class PqrsEntry {
   Map<String, dynamic> toJson() => {
         'radicado': radicado,
         'type': type,
+        'name': name,
+        'email': email,
         'subject': subject,
         'message': message,
         'rating': rating,
@@ -42,6 +48,8 @@ class PqrsEntry {
   factory PqrsEntry.fromJson(Map<String, dynamic> json) => PqrsEntry(
         radicado: json['radicado'] as String? ?? '',
         type: json['type'] as String? ?? 'petition',
+        name: json['name'] as String? ?? '',
+        email: json['email'] as String? ?? '',
         subject: json['subject'] as String? ?? '',
         message: json['message'] as String? ?? '',
         rating: (json['rating'] as num?)?.toInt() ?? 0,
@@ -91,6 +99,8 @@ class PqrsStore extends ChangeNotifier {
 
   Future<PqrsEntry> add({
     required String type,
+    required String name,
+    required String email,
     required String subject,
     required String message,
     int rating = 0,
@@ -100,6 +110,8 @@ class PqrsStore extends ChangeNotifier {
     final entry = PqrsEntry(
       radicado: _nextRadicado(now),
       type: type,
+      name: name,
+      email: email,
       subject: subject,
       message: message,
       rating: rating,
