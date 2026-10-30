@@ -57,7 +57,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   Future<void> _loadDevices() async {
     try {
       final token = await SessionStore.validToken();
-      if (token == null || token.isEmpty) return;
+      if (token == null || token.isEmpty) {
+        if (mounted) setState(() => _loadingDevices = false);
+        return;
+      }
       final items = await _service.getAppliances(token);
       final total = items.fold<double>(0, (a, e) => a + e.kwhMonth);
       if (!mounted) return;
@@ -191,9 +194,21 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               onChanged: (v) => setState(() => _consumption = v),
             ),
             if (_loadingDevices)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 6),
-                child: LinearProgressIndicator(minHeight: 2),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(children: [
+                  SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: context.isDark ? AppColors.primaryBright : AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(tr('sim_loading_devices'),
+                      style: TextStyle(fontSize: 12, color: context.tMed)),
+                ]),
               )
             else if (_devicesKwh != null)
               Row(children: [
@@ -299,7 +314,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
   Widget _label(String label, String value, {required IconData icon}) {
     return Row(children: [
-      Icon(icon, size: 16, color: context.tMed),
+      // En oscuro se usa el azul de acento (como en PC), no blanco.
+      Icon(icon, size: 16,
+          color: context.isDark ? AppColors.primaryBright : context.tMed),
       const SizedBox(width: 6),
       Expanded(
         child: Text(label,

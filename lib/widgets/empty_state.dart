@@ -44,7 +44,7 @@ class EmptyState extends StatelessWidget {
               shape: BoxShape.circle,
               color: dd ? Colors.white.withValues(alpha: 0.10) : AppColors.primary.withValues(alpha: 0.07),
             ),
-            child: Icon(icon, size: 32, color: dd ? Colors.white70 : AppColors.primary),
+            child: Icon(icon, size: 32, color: dd ? AppColors.primaryBright : AppColors.primary),
           ),
           const SizedBox(height: 12),
           Text(title, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: titleColor)),

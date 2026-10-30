@@ -157,9 +157,12 @@ class _AppShellState extends State<AppShell> {
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             indicatorColor: Colors.white.withValues(alpha: 0.18),
+            // Igual que el sidebar de PC: icono activo en amarillo.
             iconTheme: WidgetStateProperty.resolveWith(
               (states) => IconThemeData(
-                color: states.contains(WidgetState.selected) ? Colors.white : Colors.white70,
+                color: states.contains(WidgetState.selected)
+                    ? AppColors.accent
+                    : Colors.white70,
               ),
             ),
             labelTextStyle: WidgetStateProperty.resolveWith(

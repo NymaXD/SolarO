@@ -12,6 +12,7 @@ class SolarTextField extends StatefulWidget {
   final bool obscure;
   final TextInputType keyboardType;
   final TextInputAction textInputAction;
+  final int maxLines;
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
   final void Function(String)? onSubmitted;
@@ -26,6 +27,7 @@ class SolarTextField extends StatefulWidget {
     this.obscure = false,
     this.keyboardType = TextInputType.text,
     this.textInputAction = TextInputAction.next,
+    this.maxLines = 1,
     this.validator,
     this.onChanged,
     this.onSubmitted,
@@ -62,8 +64,14 @@ class _SolarTextFieldState extends State<SolarTextField> {
         TextFormField(
           controller: widget.controller,
           obscureText: _hidden,
-          keyboardType: widget.keyboardType,
+          // Un campo multilínea debe usar teclado multilínea para que
+          // TextInputAction.newline sea válido.
+          keyboardType: widget.maxLines > 1
+              ? TextInputType.multiline
+              : widget.keyboardType,
           textInputAction: widget.textInputAction,
+          minLines: widget.maxLines > 1 ? 3 : 1,
+          maxLines: widget.maxLines,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           validator: widget.validator,
           onChanged: widget.onChanged,

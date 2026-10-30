@@ -378,7 +378,7 @@ class _BarChart extends StatelessWidget {
                           Icon(
                             _iconForTipo(items[i].tipo),
                             size: 16,
-                            color: isDark ? Colors.white70 : AppColors.primary,
+                            color: isDark ? AppColors.primaryBright : AppColors.primary,
                           ),
                           const SizedBox(height: 2),
                           Text(

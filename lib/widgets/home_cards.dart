@@ -35,9 +35,11 @@ class ApplianceItem extends StatelessWidget {
           height: 56,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: dd ? Colors.white.withValues(alpha: 0.12) : item.color.withValues(alpha: 0.12),
+            // En oscuro se conserva el color de cada equipo (como en PC),
+            // solo se sube un poco la opacidad del círculo.
+            color: item.color.withValues(alpha: dd ? 0.20 : 0.12),
           ),
-          child: Icon(item.icon, color: dd ? Colors.white : item.color, size: 26),
+          child: Icon(item.icon, color: item.color, size: 26),
         ),
         const SizedBox(height: 6),
         Text(item.name, textAlign: TextAlign.center, maxLines: 2, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: dd ? Colors.white : AppColors.textDark)),
