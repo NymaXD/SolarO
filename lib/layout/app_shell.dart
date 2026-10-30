@@ -26,6 +26,21 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _index = 0;
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // En Android, la barra de navegación del sistema usa los mismos colores
+    // que el tema de la app (navy en oscuro, claro en claro), como en PC.
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+      systemNavigationBarColor: dark ? AppColors.bgDark : AppColors.background,
+      systemNavigationBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+    ));
+  }
+
   static List<String> get _titles => [tr('nav_home'), tr('nav_learn'), tr('nav_sim'), tr('nav_feedback'), tr('nav_profile'), tr('nav_settings')];
 
   void _go(int i) => setState(() => _index = i);

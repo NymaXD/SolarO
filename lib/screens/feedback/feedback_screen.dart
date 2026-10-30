@@ -24,43 +24,53 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(4),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _form,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Icon(Icons.chat_bubble_outline_rounded, color: context.isDark ? AppColors.primaryBright : AppColors.primary),
-                  const SizedBox(width: 8),
-                  Text(tr('fb_title'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.tDark)),
-                ]),
-                const SizedBox(height: 4),
-                Text(tr('fb_sub'), style: TextStyle(color: context.tMed, fontSize: 13)),
-                const SizedBox(height: 16),
-                Text(tr('rating'), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: context.tDark)),
-                Row(children: [for (int i = 1; i <= 5; i++) IconButton(tooltip: '${tr('rating')} $i/5', onPressed: () => setState(() => _stars = i), icon: Icon(i <= _stars ? Icons.star_rounded : Icons.star_outline_rounded, color: AppColors.accent, size: 28))]),
-                const SizedBox(height: 8),
-                SolarTextField(controller: _msg, label: tr('comment_label'), hint: tr('comment_hint'), prefix: Icons.message_outlined, validator: (v) => v == null || v.trim().isEmpty ? tr('v_comment') : null),
-                const SizedBox(height: 16),
-                SolarPrimaryButton(
-                  label: tr('send_fb'),
-                  icon: Icons.send_outlined,
-                  onPressed: () {
-                    if (!(_form.currentState?.validate() ?? false)) return;
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('fb_saved'))));
-                    _msg.clear();
-                  },
+    // La tarjeta ocupa el alto de la pestaña y el botón queda al pie.
+    // Si el contenido no cabe (pantallas pequeñas), todo se desplaza.
+    return LayoutBuilder(builder: (context, box) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(4),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: box.maxHeight - 8),
+          child: IntrinsicHeight(
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Form(
+                  key: _form,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [
+                        Icon(Icons.chat_bubble_outline_rounded, color: context.isDark ? AppColors.primaryBright : AppColors.primary),
+                        const SizedBox(width: 8),
+                        Text(tr('fb_title'), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: context.tDark)),
+                      ]),
+                      const SizedBox(height: 4),
+                      Text(tr('fb_sub'), style: TextStyle(color: context.tMed, fontSize: 13)),
+                      const SizedBox(height: 16),
+                      Text(tr('rating'), style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: context.tDark)),
+                      Row(children: [for (int i = 1; i <= 5; i++) IconButton(tooltip: '${tr('rating')} $i/5', onPressed: () => setState(() => _stars = i), icon: Icon(i <= _stars ? Icons.star_rounded : Icons.star_outline_rounded, color: AppColors.accent, size: 28))]),
+                      const SizedBox(height: 8),
+                      SolarTextField(controller: _msg, label: tr('comment_label'), hint: tr('comment_hint'), prefix: Icons.message_outlined, validator: (v) => v == null || v.trim().isEmpty ? tr('v_comment') : null),
+                      const SizedBox(height: 24),
+                      const Spacer(),
+                      SolarPrimaryButton(
+                        label: tr('send_fb'),
+                        icon: Icons.send_outlined,
+                        onPressed: () {
+                          if (!(_form.currentState?.validate() ?? false)) return;
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('fb_saved'))));
+                          _msg.clear();
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

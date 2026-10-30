@@ -95,7 +95,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
   double get _batteryKwh {
     if (!_battery) return 0;
-    final need = _consumption * _nightShare / (_dod * _eff);
+    // La batería se dimensiona con el consumo DIARIO nocturno, no el mensual.
+    final dailyKwh = _consumption / _daysMonth;
+    final need = dailyKwh * _nightShare / (_dod * _eff);
     for (final size in _batterySizes) {
       if (size >= need) return size;
     }
@@ -103,7 +105,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   }
 
   double get _costPanels => _panels * _panelW * _priceWatt;
-  double get _costInverter => _inverterKw * _priceKwInverter * _inverters;
+  // El precio es por kW total instalado; partir el sistema en 2 equipos
+  // no duplica la capacidad ni el costo.
+  double get _costInverter => _inverterKw * _priceKwInverter;
   double get _costBattery => _batteryKwh * _priceKwhBattery;
   double get _costInstall =>
       (_costPanels + _costInverter + _costBattery) * _installPct;
@@ -124,9 +128,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   }
 
   String _money(double v) => '\$${v.toStringAsFixed(0)}';
-
-  String _kw(double v) =>
-      '${v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1)} kW';
 
   // ---------------- UI ----------------
   @override
@@ -215,8 +216,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             Slider(
               value: _sunHours,
               min: 2,
-              max: 7,
-              divisions: 50,
+              max: 12,
+              divisions: 100,
               label: '${_sunHours.toStringAsFixed(1)} h',
               activeColor: accent,
               inactiveColor: track,
@@ -397,10 +398,12 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   }
 
   Widget _inverterCard() {
-    final kw = _kw(_inverterKw);
+    // Si el sistema usa varios equipos, el texto muestra la potencia de cada uno.
+    final perUnit = _inverterKw / _inverters;
+    final kwText = perUnit.toStringAsFixed(perUnit == perUnit.roundToDouble() ? 0 : 1);
     final text = _inverters == 1
-        ? _fill('sim_inverter_needed', {'kw': kw})
-        : _fill('sim_inverters_needed', {'n': '$_inverters', 'kw': kw});
+        ? _fill('sim_inverter_needed', {'kw': kwText})
+        : _fill('sim_inverters_needed', {'n': '$_inverters', 'kw': kwText});
     return _resultCard(
       icon: Icons.electrical_services_outlined,
       title: tr('sim_inverter'),
@@ -436,7 +439,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         ]),
       );
     }
-    final usable = _consumption * _nightShare;
+    final usable = _consumption / _daysMonth * _nightShare;
     return _resultCard(
       icon: Icons.battery_charging_full_rounded,
       title: tr('sim_battery'),

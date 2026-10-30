@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mismos colores que AppColors para que la ventana nativa de Android
+         combine con el tema de la app (claro y oscuro). -->
+    <color name="solaro_navy">#0A1230</color>
+    <color name="solaro_light">#F5F7FB</color>
+</resources>
