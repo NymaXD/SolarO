@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 # Ajustar la ruta de importación a la de tu proyecto.
-from auth import sesion_requerida
+from users.decorators import sesion_requerida
 from . import service
 
 learn = Blueprint("learn", __name__, url_prefix="/learn")

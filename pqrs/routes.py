@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 
-from auth import sesion_requerida
+from users.decorators import sesion_requerida
 from . import service
 
 pqrs = Blueprint("pqrs", __name__, url_prefix="/pqrs")
