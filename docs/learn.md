@@ -55,6 +55,41 @@ Los valores booleanos, decimales o cadenas se rechazan.
 
 ---
 
+## DELETE /learn/progress/{nivel}/{leccion}
+
+Desmarca una lección como completada. Es **idempotente**: desmarcar una lección que no estaba completada no produce error.
+
+### Parámetros de ruta
+
+| Parámetro | Tipo   | Reglas                                             |
+|-----------|--------|----------------------------------------------------|
+| `nivel`   | entero | 1, 2 o 3.                                          |
+| `leccion` | entero | Dentro del rango del nivel (ver tabla).            |
+
+No lleva cuerpo.
+
+### Respuestas
+
+| Código | Cuándo                                  |
+|--------|-----------------------------------------|
+| 200    | La lección quedó sin completar.         |
+| 401    | Sesión ausente o inválida.              |
+| 422    | `nivel` o `leccion` fuera de rango.     |
+
+**200**
+
+```json
+{ "nivel": 2, "leccion": 4, "completado": false }
+```
+
+**422**
+
+```json
+{ "error": "'leccion' debe estar entre 1 y 7 para el nivel 2" }
+```
+
+---
+
 ## GET /learn/progress
 
 Devuelve el progreso de los tres niveles en una sola llamada. Siempre incluye los tres niveles, aunque no tengan lecciones completadas.

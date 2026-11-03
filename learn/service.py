@@ -11,53 +11,38 @@ class LeccionInvalida(ValueError):
     """Nivel o lección fuera de rango, ausentes o con tipo incorrecto."""
 
 
-def _entero(valor: object, campo: str) -> int:
-    """Valida que el valor sea un entero y no un booleano.
-    Args:
-        valor (object): Valor a validar.
-        campo (str): Nombre del campo (para el mensaje de error).
-    Raises:
-        LeccionInvalida: Si el valor no es un entero o es un booleano
-    Returns:
-        int: El valor convertido a entero.
-    """
+def _entero(valor, campo):
+    # bool es subclase de int en Python: se rechaza de forma explícita.
     if isinstance(valor, bool) or not isinstance(valor, int):
         raise LeccionInvalida(f"'{campo}' debe ser un entero")
     return valor
 
 
-def _validar(datos: dict) -> tuple[int, int]:
-    """Valida los datos de nivel y lección, devolviendo (nivel, lección) como enteros.
-
-    Args:
-        datos (dict): Diccionario con los campos 'nivel' y 'leccion'.
-
-    Raises:
-        LeccionInvalida: Si los datos no son válidos.
-
-    Returns:
-        tuple[int, int]: Nivel y lección como enteros.
-    """
-    if not isinstance(datos, dict):
-        raise LeccionInvalida("El cuerpo debe ser un objeto JSON")
-    
-    if "nivel" not in datos or "leccion" not in datos:
-        raise LeccionInvalida("Se requieren los campos 'nivel' y 'leccion'")
-
-    nivel = _entero(datos["nivel"], "nivel")
+def _validar_posicion(nivel, leccion):
+    """Valida tipo y rango de un par (nivel, lección). Compartida por marcar y desmarcar."""
+    nivel = _entero(nivel, "nivel")
     if nivel not in LECCIONES_POR_NIVEL:
         raise LeccionInvalida("'nivel' debe estar entre 1 y 3")
 
-    leccion = _entero(datos["leccion"], "leccion")
+    leccion = _entero(leccion, "leccion")
     total = LECCIONES_POR_NIVEL[nivel]
-
     if not 1 <= leccion <= total:
         raise LeccionInvalida(f"'leccion' debe estar entre 1 y {total} para el nivel {nivel}")
 
     return nivel, leccion
 
 
-def marcar_completada(usuario_id: str, datos: dict) -> tuple[dict, bool]:
+def _validar(datos):
+    """Valida el cuerpo JSON del POST y delega la validación del par."""
+    if not isinstance(datos, dict):
+        raise LeccionInvalida("El cuerpo debe ser un objeto JSON")
+    if "nivel" not in datos or "leccion" not in datos:
+        raise LeccionInvalida("Se requieren los campos 'nivel' y 'leccion'")
+
+    return _validar_posicion(datos["nivel"], datos["leccion"])
+
+
+def marcar_completada(usuario_id, datos):
     """Marca una lección como completada. Idempotente.
 
     Devuelve (resultado, creado): creado es False si ya estaba completada.
@@ -75,7 +60,6 @@ def marcar_completada(usuario_id: str, datos: dict) -> tuple[dict, bool]:
         )
         db.session.commit()
         creado = True
-
     except IntegrityError:
         # La restricción única ya la tenía registrada (o hubo una petición simultánea).
         db.session.rollback()
@@ -84,7 +68,20 @@ def marcar_completada(usuario_id: str, datos: dict) -> tuple[dict, bool]:
     return {"nivel": nivel, "leccion": leccion, "completado": True}, creado
 
 
-def obtener_progreso(usuario_id: str) -> dict:
+def desmarcar_completada(usuario_id, nivel, leccion):
+    """Desmarca una lección eliminando su registro. Idempotente:
+    desmarcar una lección que no estaba completada no es un error."""
+    nivel, leccion = _validar_posicion(nivel, leccion)
+
+    ProgresoLeccion.query.filter_by(
+        usuario_id=usuario_id, nivel=nivel, leccion=leccion
+    ).delete()
+    db.session.commit()
+
+    return {"nivel": nivel, "leccion": leccion, "completado": False}
+
+
+def obtener_progreso(usuario_id):
     """Progreso de los tres niveles; el porcentaje se calcula, no se almacena."""
     filas = ProgresoLeccion.query.filter_by(usuario_id=usuario_id, completado=True).all()
 
