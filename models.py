@@ -79,3 +79,37 @@ class InfoElectrodomestico(db.Model):
     nombre: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     
     potencia_watts: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class ProgresoLeccion(db.Model):
+    """Modelo de la tabla 'progreso_lecciones'
+    
+    Atributos:
+        - id (PK): int
+        - usuario_id (FK a usuarios): int
+        - nivel: int
+        - leccion: int
+        - completado: bool
+    """
+    __tablename__ = "progreso_lecciones"
+ 
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(
+        db.Integer,
+        db.ForeignKey("usuarios.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    nivel = db.Column(db.Integer, nullable=False)
+
+    leccion = db.Column(db.Integer, nullable=False)
+    
+    completado = db.Column(db.Boolean, nullable=False, default=True)
+ 
+    __table_args__ = (
+        db.UniqueConstraint("usuario_id", "nivel", "leccion", name="uq_progreso_usuario_nivel_leccion"),
+        db.CheckConstraint("nivel BETWEEN 1 AND 3", name="ck_progreso_nivel"),
+        db.CheckConstraint("leccion >= 1", name="ck_progreso_leccion"),
+    )
+

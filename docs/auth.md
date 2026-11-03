@@ -2,7 +2,7 @@
 
 **Prefijo:** `/auth`
 **Introducido en:** 1.0.0
-**Versión vigente del contrato:** 2.1.0
+**Versión vigente del contrato:** 2.2.0
 
 Las convenciones generales, los tipos de token y el formato de errores están en [api-contract.md](api-contract.md). Cada endpoint indica la versión desde la que existe (`Desde`) y, cuando cambió, en qué versión.
 

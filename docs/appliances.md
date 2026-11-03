@@ -2,7 +2,7 @@
 
 **Prefijo:** `/appliances`
 **Introducido en:** 2.1.0
-**Versión vigente del contrato:** 2.1.0
+**Versión vigente del contrato:** 2.2.0
 
 Gestión de los electrodomésticos del usuario autenticado y consulta del catálogo de tipos disponibles. El consumo mensual **no se almacena**: se calcula al responder.
 

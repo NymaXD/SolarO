@@ -1,6 +1,6 @@
 # SolarO — Contrato de API
 
-**Versión vigente del contrato:** 2.1.0
+**Versión vigente del contrato:** 2.2.0
 **Backend:** Python + Flask
 **Base de datos:** PostgreSQL
 **Consumidores:** aplicación Flutter y aplicación web
@@ -14,6 +14,7 @@ Este documento reúne lo que es común a todos los módulos de la API: convencio
 | Autenticación | `/auth` | [auth.md](auth.md) | 1.0.0 |
 | Usuarios | `/users` | [users.md](users.md) | 2.0.0 |
 | Electrodomésticos | `/appliances` | [appliances.md](appliances.md) | 2.1.0 |
+| Progreso educativo | `/learn` | [learn.md](learn.md) | 2.2.0 |
 
 ## 1. Información general
 
@@ -54,7 +55,7 @@ La API emite tres tipos de token. Cada ruta protegida acepta únicamente el tipo
 
 | Token | Obtención | Duración | Uso |
 |---|---|---|---|
-| Acceso (sesión) | `POST /auth/login`, `POST /auth/refresh` | 15 minutos | Rutas protegidas (`/users/...`, `/appliances/...`). |
+| Acceso (sesión) | `POST /auth/login`, `POST /auth/refresh` | 15 minutos | Rutas protegidas (`/users/...`, `/appliances/...`, `/learn/...`). |
 | Refresco | `POST /auth/login`, `POST /auth/refresh`, `PUT /users/me/password` | 7 días desde su emisión | Únicamente `POST /auth/refresh`. |
 | Recuperación | Enlace enviado por correo (`POST /auth/forgot-password`) | 15 minutos, de un solo uso | Únicamente `POST /auth/reset-password`. |
 
@@ -126,9 +127,16 @@ Reglas de mantenimiento:
 
 | Versión | Módulos afectados | Resumen | Compatibilidad |
 |---|---|---|---|
+| 2.2.0 | learn | Nuevo módulo de progreso educativo | Compatible |
 | 2.1.0 | appliances | Nuevo módulo de electrodomésticos | Compatible |
 | 2.0.0 | auth, users | Nuevo módulo de usuarios; `GET /auth/me` pasa a `GET /users/me`; renovación de sesión con refresco deslizante; recuperación de contraseña de un solo uso | Incompatible |
 | 1.0.0 | auth | Contrato inicial de autenticación | — |
+
+### 2.2.0
+
+**Añadido**
+
+- Módulo de progreso educativo ([learn.md](learn.md)): `POST /learn/progress` y `GET /learn/progress`. Ambos requieren un token de acceso.
 
 ### 2.1.0
 
