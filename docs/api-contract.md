@@ -130,7 +130,7 @@ Reglas de mantenimiento:
 
 | Versión | Módulos afectados | Resumen | Compatibilidad |
 |---|---|---|---|
-| 2.3.0 | feedback | Nuevo módulo de comentarios de usuarios | Compatible |
+| 2.3.0 | PQRS | Nuevo módulo PQRS| Compatible |
 | 2.2.0 | learn | Nuevo módulo de progreso educativo | Compatible |
 | 2.1.0 | appliances | Nuevo módulo de electrodomésticos | Compatible |
 | 2.0.0 | auth, users | Nuevo módulo de usuarios; `GET /auth/me` pasa a `GET /users/me`; renovación de sesión con refresco deslizante; recuperación de contraseña de un solo uso | Incompatible |
@@ -140,8 +140,8 @@ Reglas de mantenimiento:
 
 **Añadido**
 
-- Módulo de comentarios ([feedback.md](feedback.md)): `POST /feedback`, que envía un comentario por correo al equipo. Requiere un token de acceso.
-- Códigos de respuesta `429` (límite de envíos) y `502` (fallo del proveedor de correo) en las convenciones generales.
+- Módulo de PQRS ([pqrs.md](pqrs.md)): `POST /pqrs`, que envía una petición PQRS por correo al equipo. Requiere un token de acceso.
+- Códigos de respuesta `429` (límite de envíos), `502` (fallo del proveedor de correo) en las convenciones generales, y `409` (radicado duplicado).
 
 ### 2.2.0
 

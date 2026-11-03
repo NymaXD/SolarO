@@ -113,3 +113,42 @@ class ProgresoLeccion(db.Model):
         db.CheckConstraint("leccion >= 1", name="ck_progreso_leccion"),
     )
 
+
+class SolicitudPQRS(db.Model):
+    """Modelo de la tabla 'pqrs'
+
+    Atributos:
+        - id (PK): int
+        - numero_radicado: str
+        - usuario_id (FK a usuarios): int
+        - tipo: str
+        - asunto: str (max 30 caracteres)
+        - descripcion: str (max 1000 caracteres)
+        - fecha: datetime
+    """
+    __tablename__ = "pqrs"
+ 
+    id = db.Column(db.Integer, primary_key=True)
+    numero_radicado = db.Column(db.String(50), unique=True, nullable=False)
+    usuario_id = db.Column(
+        db.Integer,
+        db.ForeignKey("usuarios.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    tipo = db.Column(db.String(10), nullable=False)
+    asunto = db.Column(db.String(30), nullable=False)
+    descripcion = db.Column(db.String(1000), nullable=False)
+    fecha = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+ 
+    __table_args__ = (
+        db.CheckConstraint(
+            "tipo IN ('peticion', 'queja', 'reclamo', 'sugerencia')",
+            name="ck_pqrs_tipo",
+        ),
+    )
+

@@ -11,7 +11,8 @@ from auth.routes import auth
 from users.routes import users
 from appliances.routes import appliances
 from learn.routes import learn
-import models
+from pqrs.routes import pqrs
+
 
 from datetime import timedelta
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -54,6 +55,7 @@ app.register_blueprint(auth)
 app.register_blueprint(users)
 app.register_blueprint(appliances)
 app.register_blueprint(learn)
+app.register_blueprint(pqrs)
 
 
 if __name__ == "__main__":
