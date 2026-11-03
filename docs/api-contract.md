@@ -1,6 +1,6 @@
 # SolarO — Contrato de API
 
-**Versión vigente del contrato:** 2.2.0
+**Versión vigente del contrato:** 2.3.0
 **Backend:** Python + Flask
 **Base de datos:** PostgreSQL
 **Consumidores:** aplicación Flutter y aplicación web
@@ -15,6 +15,7 @@ Este documento reúne lo que es común a todos los módulos de la API: convencio
 | Usuarios | `/users` | [users.md](users.md) | 2.0.0 |
 | Electrodomésticos | `/appliances` | [appliances.md](appliances.md) | 2.1.0 |
 | Progreso educativo | `/learn` | [learn.md](learn.md) | 2.2.0 |
+| Comentarios | `/feedback` | [feedback.md](feedback.md) | 2.3.0 |
 
 ## 1. Información general
 
@@ -42,8 +43,10 @@ Este documento reúne lo que es común a todos los módulos de la API: convencio
   - `403`: el token es válido, pero no es del tipo que exige la ruta.
   - `404`: el recurso asociado al token ya no existe.
   - `409`: el recurso entra en conflicto con uno existente.
+  - `429`: se superó un límite de uso.
   - `422`: el cuerpo es un objeto JSON, pero sus datos son incompletos o inválidos.
   - `500`: error inesperado del servidor, incluida la pérdida de conexión con la base de datos.
+  - `502`: un servicio externo no pudo completar la operación (por ejemplo, el proveedor de correo).
 - Las contraseñas se envían únicamente al backend, por HTTPS en producción. Nunca se devuelve la contraseña original.
 - El frontend no debe enviar el ID del usuario para decidir a qué cuenta pertenecen sus datos: el backend lo obtiene de la identidad autenticada.
 
@@ -55,7 +58,7 @@ La API emite tres tipos de token. Cada ruta protegida acepta únicamente el tipo
 
 | Token | Obtención | Duración | Uso |
 |---|---|---|---|
-| Acceso (sesión) | `POST /auth/login`, `POST /auth/refresh` | 15 minutos | Rutas protegidas (`/users/...`, `/appliances/...`, `/learn/...`). |
+| Acceso (sesión) | `POST /auth/login`, `POST /auth/refresh` | 15 minutos | Rutas protegidas (`/users/...`, `/appliances/...`, `/learn/...`, `/feedback`). |
 | Refresco | `POST /auth/login`, `POST /auth/refresh`, `PUT /users/me/password` | 7 días desde su emisión | Únicamente `POST /auth/refresh`. |
 | Recuperación | Enlace enviado por correo (`POST /auth/forgot-password`) | 15 minutos, de un solo uso | Únicamente `POST /auth/reset-password`. |
 
@@ -127,10 +130,18 @@ Reglas de mantenimiento:
 
 | Versión | Módulos afectados | Resumen | Compatibilidad |
 |---|---|---|---|
+| 2.3.0 | feedback | Nuevo módulo de comentarios de usuarios | Compatible |
 | 2.2.0 | learn | Nuevo módulo de progreso educativo | Compatible |
 | 2.1.0 | appliances | Nuevo módulo de electrodomésticos | Compatible |
 | 2.0.0 | auth, users | Nuevo módulo de usuarios; `GET /auth/me` pasa a `GET /users/me`; renovación de sesión con refresco deslizante; recuperación de contraseña de un solo uso | Incompatible |
 | 1.0.0 | auth | Contrato inicial de autenticación | — |
+
+### 2.3.0
+
+**Añadido**
+
+- Módulo de comentarios ([feedback.md](feedback.md)): `POST /feedback`, que envía un comentario por correo al equipo. Requiere un token de acceso.
+- Códigos de respuesta `429` (límite de envíos) y `502` (fallo del proveedor de correo) en las convenciones generales.
 
 ### 2.2.0
 
