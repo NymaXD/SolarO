@@ -115,7 +115,7 @@ def enviar_correo_smtp(email: str, token: str) -> None:
         f"/reset-password?t={token}"
     )
 
-    mensaje = Message(
+    """mensaje = Message(
         subject="Recuperación de contraseña - SolarO",
         recipients=[email],
         body=(
@@ -125,9 +125,9 @@ def enviar_correo_smtp(email: str, token: str) -> None:
             "Este enlace vence en 15 minutos. "
             "Si no solicitaste este cambio, ignora este mensaje."
         )
-    )
+    )"""
 
-    mail.send(mensaje)
+    #mail.send(mensaje)
 
 
 def enviar_correo(destinatario: str, asunto: str, html: str):
