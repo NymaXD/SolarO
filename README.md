@@ -1,17 +1,22 @@
-# solar_o
+# SolarO
 
-A new Flutter project.
+## Conectar el backend
 
-## Getting Started
+En Android, la app usa `http://10.0.2.2:5000` al ejecutar en modo debug con un
+emulador; esa dirección apunta al puerto 5000 de la computadora. Inicia el
+backend local en ese puerto antes de ejecutar la app. El permiso para HTTP local
+está habilitado únicamente en la variante debug.
 
-This project is a starting point for a Flutter application.
+Las compilaciones Android profile y release usan
+`https://solaro-jboy.onrender.com`. El primer acceso puede tardar mientras el
+servicio se activa.
 
-A few resources to get you started if this is your first Flutter project:
+Para probar en un teléfono físico, configura la IP local de la computadora:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```powershell
+flutter run --dart-define=API_BASE_URL=http://192.168.1.10:5000
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Reemplaza `192.168.1.10` por la IP de tu computadora y permite el puerto 5000 en
+el firewall. También se puede reemplazar la URL predeterminada en cualquier
+plataforma mediante `--dart-define=API_BASE_URL=<url>`.
