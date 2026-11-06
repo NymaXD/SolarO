@@ -48,3 +48,8 @@ app.*.map.json
 .widget_preview/
 .vercel
 .env*
+
+# Python virtual environment
+venv/
+__pycache__/
+instance/
