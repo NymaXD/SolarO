@@ -217,6 +217,8 @@ class AppLang {
     'faq_a7': {'es': 'Tu cuenta y tu sesión se guardan en este dispositivo. Las PQRS se registran en la base de datos de SolarO y el historial se consulta desde tu cuenta. Puedes leer la política de privacidad en Configuración.', 'en': 'Your account and session are stored on this device. PQRS are saved in SolarO\'s database and the history is loaded from your account. You can read the privacy policy in Settings.'},
     'faq_q8': {'es': '¿Cómo contacto al equipo?', 'en': 'How do I contact the team?'},
     'faq_a8': {'es': 'Escríbenos al correo de cualquiera de los integrantes que aparecen abajo. También puedes copiar el correo con un toque.', 'en': 'Email any of the team members listed below. You can also copy the email with one tap.'},
+    'faq_q9': {'es': '¿Cómo contacto al equipo mediante PQRS?', 'en': 'How do I contact the team via PQRS?'},
+    'faq_a9': {'es': 'Puedes crear una PQRS en la sección “Mis PQRS”. Completa el formulario y recibirás un número de radicado y podrás seguir el estado de tu solicitud.', 'en': 'You can create a PQRS in the “My PQRS” section. Fill the form and you will receive a reference number and be able to track the status of your request.'},
     'contact_title': {'es': 'Contacto', 'en': 'Contact'},
     'contact_sub': {'es': 'Escríbenos a cualquiera del equipo:', 'en': 'Email anyone on the team:'},
     'contact_mail': {'es': 'Enviar correo', 'en': 'Send email'},

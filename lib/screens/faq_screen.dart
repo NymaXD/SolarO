@@ -19,6 +19,7 @@ class FaqScreen extends StatelessWidget {
     ('faq_q6', 'faq_a6'),
     ('faq_q7', 'faq_a7'),
     ('faq_q8', 'faq_a8'),
+    ('faq_q9', 'faq_a9'),
   ];
 
   Future<void> _copy(BuildContext context, String email) async {

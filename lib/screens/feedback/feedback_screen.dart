@@ -11,9 +11,7 @@ import '../faq_screen.dart';
 
 /// PQRS: peticiones, quejas, reclamos y sugerencias.
 ///
-/// Cada PQRS se radica con un número consecutivo y se guarda en el
-/// dispositivo. El modelo ya está listo para enviarse al backend cuando
-/// exista el endpoint.
+/// Cada PQRS se envía al backend junto con los datos de contacto del usuario.
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
   @override
@@ -39,7 +37,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     _loadUser();
   }
 
-  /// Prellena nombre y correo con los datos de la cuenta.
   Future<void> _loadUser() async {
     final user = await SessionStore.readUser();
     if (!mounted || user == null) return;
@@ -116,10 +113,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: AppColors.error,
-        ),
+        SnackBar(content: Text(message), backgroundColor: AppColors.error),
       );
   }
 
@@ -146,7 +140,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   Widget _formCard() {
-    final primary = context.isDark ? AppColors.primaryBright : AppColors.primary;
+    final primary = context.isDark
+        ? AppColors.primaryBright
+        : AppColors.primary;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -155,24 +151,34 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: [
-                Icon(Icons.chat_bubble_outline_rounded, color: primary),
-                const SizedBox(width: 8),
-                Text(tr('fb_title'),
+              Row(
+                children: [
+                  Icon(Icons.chat_bubble_outline_rounded, color: primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    tr('fb_title'),
                     style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                        color: context.tDark)),
-              ]),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      color: context.tDark,
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 4),
-              Text(tr('fb_sub'),
-                  style: TextStyle(color: context.tMed, fontSize: 13)),
+              Text(
+                tr('fb_sub'),
+                style: TextStyle(color: context.tMed, fontSize: 13),
+              ),
               const SizedBox(height: 18),
-              Text(tr('pqrs_type'),
-                  style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: context.tDark)),
+              Text(
+                tr('pqrs_type'),
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: context.tDark,
+                ),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -190,8 +196,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         color: _type == t
                             ? Colors.white
                             : (context.isDark
-                                ? Colors.white
-                                : AppColors.primaryDark),
+                                  ? Colors.white
+                                  : AppColors.primaryDark),
                       ),
                     ),
                 ],
@@ -245,31 +251,40 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              Text(tr('pqrs_rating_optional'),
-                  style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: context.tDark)),
-              Row(children: [
-                for (int i = 1; i <= 5; i++)
-                  IconButton(
-                    tooltip: '${tr('rating')} $i/5',
-                    onPressed: () =>
-                        setState(() => _stars = _stars == i ? 0 : i),
-                    icon: Icon(
-                      i <= _stars
-                          ? Icons.star_rounded
-                          : Icons.star_outline_rounded,
-                      color: AppColors.accent,
-                      size: 28,
+              Text(
+                tr('pqrs_rating_optional'),
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: context.tDark,
+                ),
+              ),
+              Row(
+                children: [
+                  for (int i = 1; i <= 5; i++)
+                    IconButton(
+                      tooltip: '${tr('rating')} $i/5',
+                      onPressed: () =>
+                          setState(() => _stars = _stars == i ? 0 : i),
+                      icon: Icon(
+                        i <= _stars
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        color: AppColors.accent,
+                        size: 28,
+                      ),
                     ),
-                  ),
-                const Spacer(),
-                if (_stars > 0)
-                  Text('$_stars/5',
+                  const Spacer(),
+                  if (_stars > 0)
+                    Text(
+                      '$_stars/5',
                       style: TextStyle(
-                          fontWeight: FontWeight.w800, color: context.tDark)),
-              ]),
+                        fontWeight: FontWeight.w800,
+                        color: context.tDark,
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -280,16 +295,22 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: context.border),
                 ),
-                child: Row(children: [
-                  Icon(Icons.cloud_done_outlined,
-                      size: 18, color: context.tMed),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(tr('pqrs_server_note'),
-                        style:
-                            TextStyle(fontSize: 11.5, color: context.tMed)),
-                  ),
-                ]),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.cloud_done_outlined,
+                      size: 18,
+                      color: context.tMed,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        tr('pqrs_server_note'),
+                        style: TextStyle(fontSize: 11.5, color: context.tMed),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               SolarPrimaryButton(
@@ -307,49 +328,61 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   Widget _historyCard() {
     final store = PqrsStore.instance;
-    final primary = context.isDark ? AppColors.primaryBright : AppColors.primary;
+    final primary = context.isDark
+        ? AppColors.primaryBright
+        : AppColors.primary;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Icon(Icons.assignment_outlined, color: primary),
-              const SizedBox(width: 8),
-              Text(tr('pqrs_my'),
+            Row(
+              children: [
+                Icon(Icons.assignment_outlined, color: primary),
+                const SizedBox(width: 8),
+                Text(
+                  tr('pqrs_my'),
                   style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                      color: context.tDark)),
-              const Spacer(),
-              if (store.loaded)
-                IconButton(
-                  tooltip: tr('retry'),
-                  onPressed: store.refreshing ? null : store.refresh,
-                  icon: store.refreshing
-                      ? const SizedBox(
-                          height: 16,
-                          width: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Icon(Icons.refresh_rounded, size: 20, color: primary),
-                ),
-              if (store.entries.isNotEmpty)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    color: context.tDark,
                   ),
-                  child: Text('${store.entries.length}',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                          color: primary)),
                 ),
-            ]),
+                const Spacer(),
+                if (store.loaded)
+                  IconButton(
+                    tooltip: tr('retry'),
+                    onPressed: store.refreshing ? null : store.refresh,
+                    icon: store.refreshing
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(Icons.refresh_rounded, size: 20, color: primary),
+                  ),
+                if (store.entries.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${store.entries.length}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        color: primary,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(height: 12),
             if (store.syncError != null) ...[
               _syncBanner(store.syncError!),
@@ -358,8 +391,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             if (!store.loaded)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
-                child: Center(
-                    child: CircularProgressIndicator(strokeWidth: 2)),
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
               )
             else if (store.entries.isEmpty)
               _emptyHistory()
@@ -383,116 +415,115 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
       ),
-      child: Row(children: [
-        const Icon(Icons.cloud_off_outlined,
-            size: 16, color: AppColors.warning),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            '${tr('pqrs_sync_error')} $message',
-            style: TextStyle(fontSize: 11.5, color: context.tDark),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.cloud_off_outlined,
+            size: 16,
+            color: AppColors.warning,
           ),
-        ),
-      ]),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${tr('pqrs_sync_error')} $message',
+              style: TextStyle(fontSize: 11.5, color: context.tDark),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _helpCard() {
-    final primary = context.isDark ? AppColors.primaryBright : AppColors.primary;
+    final primary = context.isDark
+        ? AppColors.primaryBright
+        : AppColors.primary;
     return Card(
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         leading: Icon(Icons.help_outline_rounded, color: primary),
-        title: Text(tr('faq_help_title'),
-            style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 14,
-                color: context.tDark)),
-        subtitle: Text(tr('faq_help_sub'),
-            style: TextStyle(fontSize: 12.5, color: context.tMed)),
-        trailing: Icon(Icons.chevron_right_rounded, color: context.tMed),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const FaqScreen()),
+        title: Text(
+          tr('faq_help_title'),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+            color: context.tDark,
+          ),
         ),
+        subtitle: Text(
+          tr('faq_help_sub'),
+          style: TextStyle(fontSize: 12.5, color: context.tMed),
+        ),
+        trailing: Icon(Icons.chevron_right_rounded, color: context.tMed),
+        onTap: () =>
+            Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => const FaqScreen())),
       ),
     );
   }
 
   Widget _emptyHistory() {
-    final primary = context.isDark ? AppColors.primaryBright : AppColors.primary;
+    final primary = context.isDark
+        ? AppColors.primaryBright
+        : AppColors.primary;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
       decoration: BoxDecoration(
-        color:
-            context.isDark ? AppColors.surfaceDark2 : AppColors.background,
+        color: context.isDark ? AppColors.surfaceDark2 : AppColors.background,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: context.border),
       ),
-      child: Column(children: [
-        Icon(Icons.inbox_outlined, size: 30, color: primary),
-        const SizedBox(height: 8),
-        Text(tr('pqrs_empty'),
+      child: Column(
+        children: [
+          Icon(Icons.inbox_outlined, size: 30, color: primary),
+          const SizedBox(height: 8),
+          Text(
+            tr('pqrs_empty'),
             textAlign: TextAlign.center,
             style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 13.5,
-                color: context.tDark)),
-        const SizedBox(height: 2),
-        Text(tr('pqrs_empty_sub'),
+              fontWeight: FontWeight.w800,
+              fontSize: 13.5,
+              color: context.tDark,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            tr('pqrs_empty_sub'),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: context.tMed)),
-      ]),
+            style: TextStyle(fontSize: 12, color: context.tMed),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _entryTile(PqrsEntry e) {
-    final color = _typeColor(e.type);
+  Widget _entryTile(PqrsEntry entry) {
+    final color = _typeColor(entry.type);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 6,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            _chip(_typeLabel(e.type), color),
-            _chip(
-              e.status == 'synced'
-                  ? tr('pqrs_status_submitted')
-                  : tr('pqrs_pending_sync'),
-              e.status == 'synced' ? AppColors.success : AppColors.warning,
-            ),
-          ],
-        ),
+        _chip(_typeLabel(entry.type), color),
         const SizedBox(height: 8),
-        Text(e.subject,
-            style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 13.5,
-                color: context.tDark)),
-        if (e.name.isNotEmpty || e.email.isNotEmpty) ...[
-          const SizedBox(height: 3),
-          _meta(
-            Icons.person_outline_rounded,
-            [e.name, e.email].where((s) => s.isNotEmpty).join(' · '),
+        Text(
+          entry.subject,
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 13.5,
+            color: context.tDark,
           ),
-        ],
-        const SizedBox(height: 2),
-        if (e.message.isNotEmpty)
-          Text(e.message,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12.5, color: context.tMed)),
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 12,
           runSpacing: 4,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            _meta(Icons.confirmation_number_outlined,
-                '${tr('pqrs_radicado')}: ${e.radicado}'),
-            _meta(Icons.schedule_rounded, _date(e.createdAt)),
+            _meta(
+              Icons.confirmation_number_outlined,
+              '${tr('pqrs_radicado')}: ${entry.radicado}',
+            ),
+            _meta(Icons.schedule_rounded, _date(entry.createdAt)),
           ],
         ),
       ],
@@ -501,14 +532,19 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   Widget _chip(String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label,
-          style: TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w800, color: color)),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11.5,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 
@@ -517,12 +553,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: context.tMed),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text(text,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11, color: context.tMed)),
-        ),
+        const SizedBox(width: 5),
+        Text(text, style: TextStyle(fontSize: 11.5, color: context.tMed)),
       ],
     );
   }
