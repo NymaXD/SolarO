@@ -105,31 +105,6 @@ def actualizar_contrasena(usuario: Usuario, nueva_contrasena: str):
         raise
 
 
-def enviar_correo_smtp(email: str, token: str) -> None:
-    """Función archivada. Usa SMTP. Puerto bloqueado por el PaaS utilizado.
-    
-    Envía un email de recuperación de contraseña al email introducido."""
-
-    enlace = (
-        f"{current_app.config['FRONTEND_URL']}"
-        f"/reset-password?t={token}"
-    )
-
-    """mensaje = Message(
-        subject="Recuperación de contraseña - SolarO",
-        recipients=[email],
-        body=(
-            "Hola,\n\n"
-            "Recibimos una solicitud para restablecer la contraseña de tu cuenta de SolarO.\n\n"
-            f"Abre el siguiente enlace para continuar:\n{enlace}\n\n"
-            "Este enlace vence en 15 minutos. "
-            "Si no solicitaste este cambio, ignora este mensaje."
-        )
-    )"""
-
-    #mail.send(mensaje)
-
-
 def enviar_correo(destinatario: str, asunto: str, html: str):
     """Envía un correo transaccional mediante la API de Brevo."""
     respuesta = requests.post(
