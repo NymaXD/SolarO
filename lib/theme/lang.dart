@@ -116,7 +116,8 @@ class AppLang {
     'learn_mark_done': {'es': 'Marcar como completado', 'en': 'Mark as completed'},
     'learn_level_complete': {'es': '¡Nivel completado!', 'en': 'Level completed!'},
     'learn_back': {'es': 'Volver a módulos', 'en': 'Back to modules'},
-    'learn_video_note': {'es': 'Reproduce el video aquí mismo. Si no carga, revisa tu conexión.', 'en': 'Play the video right here. If it does not load, check your connection.'},
+    'learn_video_note': {'es': 'Si el video no carga, ábrelo en YouTube y revisa tu conexión.', 'en': 'If the video does not load, open it on YouTube and check your connection.'},
+    'learn_video_open_error': {'es': 'No se pudo abrir YouTube. Inténtalo de nuevo.', 'en': 'Could not open YouTube. Please try again.'},
     // Simulador
     'sim_title': {'es': 'Simulador solar', 'en': 'Solar simulator'},
     'sim_sub': {'es': 'Ajusta los valores para estimar tu generación (demo visual).', 'en': 'Adjust the values to estimate your generation (visual demo).'},

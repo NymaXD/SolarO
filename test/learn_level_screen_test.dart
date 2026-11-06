@@ -48,4 +48,26 @@ void main() {
     expect(find.text('Completado'), findsNothing);
     expect(calls, contains('DELETE /learn/progress/1/1'));
   });
+
+  testWidgets('las lecciones de video ofrecen abrir YouTube', (tester) async {
+    final service = LearnService(
+      client: MockClient((_) async => http.Response('{}', 200)),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LearnLevelScreen(
+          level: LearnData.levels().first,
+          service: service,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Video: ¿Qué es la energía solar?'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ver video en YouTube'), findsOneWidget);
+    expect(find.textContaining('ábrelo en YouTube'), findsOneWidget);
+  });
 }
