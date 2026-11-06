@@ -280,7 +280,7 @@ def radicar_pqrs(usuario: Usuario, datos: dict) -> dict:
 
     if not destino:
         db.session.rollback()
-        logger.error("Falta la variable de entorno FEEDBACK_DESTINO")
+        logger.error("Falta la variable de entorno PQRS_DESTINO_EMAIL")
         raise EnvioFallido()
 
     try:
