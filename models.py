@@ -96,7 +96,7 @@ class ProgresoLeccion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(
         db.Integer,
-        db.ForeignKey("usuarios.id", ondelete="CASCADE"),
+        db.ForeignKey("usuarios.id_usuario", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -132,7 +132,7 @@ class SolicitudPQRS(db.Model):
     numero_radicado = db.Column(db.String(50), unique=True, nullable=False)
     usuario_id = db.Column(
         db.Integer,
-        db.ForeignKey("usuarios.id", ondelete="SET NULL"),
+        db.ForeignKey("usuarios.id_usuario", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
