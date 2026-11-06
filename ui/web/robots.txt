@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://solaro-black.vercel.app/sitemap.xml
