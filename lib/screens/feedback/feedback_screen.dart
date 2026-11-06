@@ -19,7 +19,7 @@ class FeedbackScreen extends StatefulWidget {
 }
 
 class _FeedbackScreenState extends State<FeedbackScreen> {
-  final _form = GlobalKey<FormState>();
+  GlobalKey<FormState> _form = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _subject = TextEditingController();
@@ -97,6 +97,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       _subject.clear();
       _msg.clear();
       setState(() {
+        _form = GlobalKey<FormState>();
         _type = 'petition';
         _stars = 0;
       });
