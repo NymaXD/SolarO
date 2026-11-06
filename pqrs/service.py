@@ -2,6 +2,7 @@ import logging
 import os
 import re
 from datetime import datetime, timedelta, timezone
+from flask import current_app
 
 import requests
 from sqlalchemy.exc import IntegrityError
@@ -28,7 +29,6 @@ LIMITE_SOLICITUDES = 3       # solicitudes permitidas por usuario...
 VENTANA = timedelta(hours=1)  # ...en esta ventana
 
 TIMEOUT_SEGUNDOS = 10
-BREVO_URL = "https://api.brevo.com/v3/smtp/email"
 
 # El radicado lo genera el frontend: se trata como dato no confiable.
 # Ajustar el patrón al formato real de los radicados.
@@ -174,8 +174,8 @@ def enviar_correo(destinatario: str, asunto: str, cuerpo: str, reply_to=None):
     Raises:
         EnvioFallido: Si el envío del correo falla.
     """
-    api_key = os.getenv("BREVO_API_KEY")
-    remitente = os.getenv("BREVO_SENDER_EMAIL")
+    api_key = current_app.config.get("BREVO_API_KEY")
+    remitente = current_app.config.get("BREVO_SENDER_EMAIL")
 
     if not (api_key and remitente):
         logger.error("Faltan variables de entorno de Brevo")
@@ -192,7 +192,7 @@ def enviar_correo(destinatario: str, asunto: str, cuerpo: str, reply_to=None):
 
     try:
         respuesta = requests.post(
-            BREVO_URL,
+            current_app.config.get("BREVO_API_URL"),
             json=payload,
             headers={"api-key": api_key, "accept": "application/json"},
             timeout=TIMEOUT_SEGUNDOS,
@@ -276,7 +276,8 @@ def radicar_pqrs(usuario: Usuario, datos: dict) -> dict:
         db.session.rollback()
         raise RadicadoDuplicado("El número de radicado ya existe")
 
-    destino = os.getenv("FEEDBACK_DESTINO")
+    destino = current_app.config.get("PQRS_DESTINO_EMAIL")
+
     if not destino:
         db.session.rollback()
         logger.error("Falta la variable de entorno FEEDBACK_DESTINO")

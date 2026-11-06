@@ -35,6 +35,7 @@ app.config["BREVO_API_URL"] = os.environ.get("BREVO_API_URL")
 app.config["BREVO_API_KEY"] = os.environ.get("BREVO_API_KEY")
 app.config["BREVO_SENDER_EMAIL"] = os.environ.get("BREVO_SENDER_EMAIL")
 app.config["FRONTEND_URL"] = os.environ.get("FRONTEND_URL")
+app.config["PQRS_DESTINO_EMAIL"] = os.environ.get("PQRS_DESTINO_EMAIL")
 
 # === CONFIGURACION CORS ===
 app.config["CORS_ORIGINS"] = os.environ["FRONTEND_URL"]
