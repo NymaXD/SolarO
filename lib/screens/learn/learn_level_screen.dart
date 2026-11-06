@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../services/auth_service.dart';
+import '../../services/learn_service.dart';
+import '../../services/session_store.dart';
+import '../../services/settings_store.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/lang.dart';
 import '../../widgets/learn_progress_bar.dart';
@@ -8,58 +12,103 @@ import 'learn_level.dart';
 
 /// Pantalla de detalle de un nivel: lecturas y videos reproducibles en la página.
 ///
-/// El progreso se guarda localmente y está listo para sincronizarse con el
-/// backend (GET /learn/progress, POST /learn/progress).
+/// Marca y desmarca lecciones contra `POST/DELETE /learn/progress` con
+/// actualización optimista: la UI cambia al instante y se revierte si la API
+/// falla. El nivel se reconstruye desde [LearnData] en cada build, así que el
+/// contenido también cambia de idioma.
 class LearnLevelScreen extends StatefulWidget {
   final LearnLevel level;
-  const LearnLevelScreen({super.key, required this.level});
+  final LearnService? service;
+
+  const LearnLevelScreen({super.key, required this.level, this.service});
 
   @override
   State<LearnLevelScreen> createState() => _LearnLevelScreenState();
 }
 
 class _LearnLevelScreenState extends State<LearnLevelScreen> {
-  late LearnLevel _level;
+  late final LearnService _service;
+  late Set<int> _done;
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    _level = widget.level;
+    _service = widget.service ?? LearnService();
+    _done = widget.level.lessons
+        .where((l) => l.done)
+        .map((l) => l.number)
+        .toSet();
   }
 
-  /// Marca/desmarca una lección y recalcula el progreso.
-  /// TODO: backend — POST /learn/progress {nivel_id, leccion_id, done}
-  void _toggleLesson(String lessonId) {
-    final lessons = _level.lessons
-        .map((l) => l.id == lessonId ? l.copyWith(done: !l.done) : l)
-        .toList();
-    final doneCount = lessons.where((l) => l.done).length;
+  LearnLevel get _level =>
+      LearnData.level(widget.level.number).withProgress(_done);
+
+  /// Marca/desmarca una lección y sincroniza con el backend.
+  Future<void> _toggleLesson(LearnLesson lesson) async {
+    if (_saving) return;
+    final marking = !lesson.done;
+    final previous = Set<int>.from(_done);
 
     setState(() {
-      _level = LearnLevel(
-        id: _level.id,
-        title: _level.title,
-        subtitle: _level.subtitle,
-        lessons: lessons,
-        completed: doneCount,
-      );
+      if (marking) {
+        _done.add(lesson.number);
+      } else {
+        _done.remove(lesson.number);
+      }
       _saving = true;
     });
 
-    Future.delayed(const Duration(milliseconds: 350), () {
+    try {
+      final token = await SessionStore.validToken();
+      if (token == null) {
+        throw AuthException(tr('session_expired'), 401);
+      }
+      if (marking) {
+        await _service.markLesson(token, widget.level.number, lesson.number);
+      } else {
+        await _service.unmarkLesson(token, widget.level.number, lesson.number);
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      setState(() => _done = previous);
+      _showError(e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _done = previous);
+      _showError(tr('err_generic'));
+    } finally {
       if (mounted) setState(() => _saving = false);
-    });
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppColors.error,
+        ),
+      );
   }
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: SettingsStore.instance,
+      builder: (context, _) => _buildScaffold(context),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
     final isDark = context.isDark;
+    final level = _level;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.bgDark : AppColors.background,
       appBar: AppBar(
-        title: Text(_level.title,
+        title: Text(level.title,
             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -77,21 +126,23 @@ class _LearnLevelScreenState extends State<LearnLevelScreen> {
             decoration: BoxDecoration(
               color: isDark ? AppColors.surfaceDark : Colors.white,
               border: Border(
-                bottom: BorderSide(color: isDark ? AppColors.borderDark : AppColors.divider),
+                bottom: BorderSide(
+                    color: isDark ? AppColors.borderDark : AppColors.divider),
               ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_level.subtitle,
+                Text(level.subtitle,
                     style: TextStyle(
                         fontSize: 13,
-                        color: isDark ? AppColors.mutedDark : AppColors.textMedium)),
+                        color:
+                            isDark ? AppColors.mutedDark : AppColors.textMedium)),
                 const SizedBox(height: 12),
                 LearnProgressBar(
-                  progress: _level.progress,
-                  completed: _level.completed,
-                  total: _level.total,
+                  progress: level.progress,
+                  completed: level.completed,
+                  total: level.total,
                 ),
                 if (_saving)
                   const Padding(
@@ -109,13 +160,14 @@ class _LearnLevelScreenState extends State<LearnLevelScreen> {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              itemCount: _level.lessons.length,
+              itemCount: level.lessons.length,
               itemBuilder: (context, i) {
-                final l = _level.lessons[i];
+                final l = level.lessons[i];
                 return _LessonCard(
                   key: ValueKey(l.id),
                   lesson: l,
-                  onToggle: () => _toggleLesson(l.id),
+                  enabled: !_saving,
+                  onToggle: () => _toggleLesson(l),
                 );
               },
             ),
@@ -130,11 +182,13 @@ class _LearnLevelScreenState extends State<LearnLevelScreen> {
 class _LessonCard extends StatefulWidget {
   final LearnLesson lesson;
   final VoidCallback onToggle;
+  final bool enabled;
 
   const _LessonCard({
     super.key,
     required this.lesson,
     required this.onToggle,
+    this.enabled = true,
   });
 
   @override
@@ -183,7 +237,9 @@ class _LessonCardState extends State<_LessonCard> {
                       child: Icon(
                         done
                             ? Icons.check_circle
-                            : (l.isVideo ? Icons.play_circle_fill : Icons.menu_book_rounded),
+                            : (l.isVideo
+                                ? Icons.play_circle_fill
+                                : Icons.menu_book_rounded),
                         color: done ? AppColors.success : accent,
                         size: 24,
                       ),
@@ -198,8 +254,11 @@ class _LessonCardState extends State<_LessonCard> {
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 14.5,
-                              color: isDark ? AppColors.textWhite : AppColors.textDark,
-                              decoration: done ? TextDecoration.lineThrough : null,
+                              color: isDark
+                                  ? AppColors.textWhite
+                                  : AppColors.textDark,
+                              decoration:
+                                  done ? TextDecoration.lineThrough : null,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -207,7 +266,9 @@ class _LessonCardState extends State<_LessonCard> {
                             l.isVideo ? tr('learn_video') : tr('learn_reading'),
                             style: TextStyle(
                               fontSize: 11.5,
-                              color: isDark ? AppColors.mutedDark : AppColors.textMedium,
+                              color: isDark
+                                  ? AppColors.mutedDark
+                                  : AppColors.textMedium,
                             ),
                           ),
                         ],
@@ -240,7 +301,9 @@ class _LessonCardState extends State<_LessonCard> {
                       tr('learn_video_note'),
                       style: TextStyle(
                         fontSize: 11.5,
-                        color: isDark ? AppColors.mutedDark : AppColors.textMedium,
+                        color: isDark
+                            ? AppColors.mutedDark
+                            : AppColors.textMedium,
                       ),
                     ),
                   ] else if (l.contenido != null)
@@ -268,9 +331,11 @@ class _LessonCardState extends State<_LessonCard> {
                       Expanded(
                         child: done
                             ? Container(
-                                padding: const EdgeInsets.symmetric(vertical: 9),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 9),
                                 decoration: BoxDecoration(
-                                  color: AppColors.success.withValues(alpha: 0.12),
+                                  color:
+                                      AppColors.success.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Row(
@@ -288,25 +353,29 @@ class _LessonCardState extends State<_LessonCard> {
                                 ),
                               )
                             : ElevatedButton.icon(
-                                onPressed: widget.onToggle,
+                                onPressed:
+                                    widget.enabled ? widget.onToggle : null,
                                 icon: const Icon(Icons.check, size: 17),
                                 label: Text(tr('learn_mark_done'),
                                     style: const TextStyle(
-                                        fontSize: 12.5, fontWeight: FontWeight.w800)),
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w800)),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.accent,
                                   foregroundColor: AppColors.onAccent,
                                   elevation: 0,
-                                  padding: const EdgeInsets.symmetric(vertical: 9),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 9),
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
+                                      borderRadius:
+                                          BorderRadius.circular(10)),
                                 ),
                               ),
                       ),
                       if (done) ...[
                         const SizedBox(width: 8),
                         TextButton(
-                          onPressed: widget.onToggle,
+                          onPressed: widget.enabled ? widget.onToggle : null,
                           child: Text(tr('learn_lesson_pending'),
                               style: const TextStyle(fontSize: 11.5)),
                         ),
@@ -326,7 +395,7 @@ class _LessonCardState extends State<_LessonCard> {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: 'Leer',
+      barrierLabel: tr('learn_read'),
       pageBuilder: (_, _, _) => Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480, maxHeight: 620),
@@ -342,21 +411,27 @@ class _LessonCardState extends State<_LessonCard> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: AppColors.primaryLight.withValues(alpha: 0.12),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(18)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.menu_book_rounded, color: AppColors.primary, size: 20),
+                      const Icon(Icons.menu_book_rounded,
+                          color: AppColors.primary, size: 20),
                       const SizedBox(width: 8),
                       Text(tr('learn_reading'),
                           style: const TextStyle(
-                              color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 13)),
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13)),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.close, color: AppColors.textMedium, size: 20),
+                        icon: const Icon(Icons.close,
+                            color: AppColors.textMedium, size: 20),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],

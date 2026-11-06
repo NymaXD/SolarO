@@ -3,13 +3,16 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../theme/lang.dart';
+import 'auth_service.dart';
+import 'pqrs_service.dart';
 import 'session_store.dart';
 
 /// Una PQRS radicada por el usuario.
 ///
-/// Por ahora se guarda en el dispositivo (SharedPreferences). El modelo ya
-/// tiene todos los campos que necesitará el POST al backend, así que conectar
-/// la API después solo requiere enviar [toJson] y actualizar el estado.
+/// El historial local se conserva como caché de detalles (nombre, correo,
+/// descripción y calificación), porque `GET /pqrs` solo devuelve el radicado,
+/// el tipo, el asunto y la fecha. Al cargar, ambos historiales se fusionan.
 class PqrsEntry {
   final String radicado;
   final String type; // petition | complaint | claim | suggestion
@@ -57,27 +60,70 @@ class PqrsEntry {
             DateTime.now(),
         status: json['status'] as String? ?? 'submitted',
       );
+
+  /// Entrada que solo existe en el servidor (radicada desde otro dispositivo).
+  factory PqrsEntry.fromRemote(PqrsRemoteEntry remote) => PqrsEntry(
+        radicado: remote.radicado,
+        type: remote.type,
+        name: '',
+        email: '',
+        subject: remote.subject,
+        message: '',
+        rating: 0,
+        createdAt: remote.createdAt,
+        status: 'synced',
+      );
+
+  PqrsEntry copyWith({String? status}) => PqrsEntry(
+        radicado: radicado,
+        type: type,
+        name: name,
+        email: email,
+        subject: subject,
+        message: message,
+        rating: rating,
+        createdAt: createdAt,
+        status: status ?? this.status,
+      );
 }
 
-/// Historial local de PQRS, separado por usuario.
+/// Historial de PQRS, separado por usuario.
+///
+/// `POST /pqrs` es la fuente de verdad; el historial local solo guarda los
+/// detalles que la API no devuelve. Si el envío falla, no se guarda nada y el
+/// error se propaga a la pantalla.
 class PqrsStore extends ChangeNotifier {
   PqrsStore._();
   static final PqrsStore instance = PqrsStore._();
 
   static const _prefix = 'solaro.pqrs';
 
+  final PqrsService _service = PqrsService();
+
   List<PqrsEntry> _entries = const [];
   bool _loaded = false;
+  bool _refreshing = false;
+  String? _syncError;
   String _key = _prefix;
+  int _sequence = 0;
 
   List<PqrsEntry> get entries => List.unmodifiable(_entries);
   bool get loaded => _loaded;
+  bool get refreshing => _refreshing;
+  String? get syncError => _syncError;
 
   Future<void> load() async {
     final user = await SessionStore.readUser();
     final email = user?.email.trim().toLowerCase() ?? '';
-    _key = email.isEmpty ? _prefix : '$_prefix.$email';
+    final key = email.isEmpty ? _prefix : '$_prefix.$email';
 
+    // Si ya está cargado el mismo usuario, solo se refresca el servidor.
+    if (_loaded && key == _key) {
+      await refresh();
+      return;
+    }
+
+    _key = key;
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_key);
     _entries = const [];
@@ -94,7 +140,45 @@ class PqrsStore extends ChangeNotifier {
       }
     }
     _loaded = true;
+    _syncError = null;
     notifyListeners();
+
+    await refresh();
+  }
+
+  /// Trae las PQRS del backend y las fusiona con la caché local.
+  Future<void> refresh() async {
+    if (_refreshing) return;
+    _refreshing = true;
+    try {
+      final token = await SessionStore.validToken();
+      if (token == null) {
+        _syncError = tr('session_expired');
+        return;
+      }
+      final remote = await _service.list(token);
+      _merge(remote);
+      _syncError = null;
+      await _persist();
+    } on AuthException catch (e) {
+      _syncError = e.message;
+    } catch (_) {
+      _syncError = tr('err_generic');
+    } finally {
+      _refreshing = false;
+      notifyListeners();
+    }
+  }
+
+  void _merge(List<PqrsRemoteEntry> remote) {
+    final byRadicado = {for (final entry in _entries) entry.radicado: entry};
+    for (final item in remote) {
+      final local = byRadicado[item.radicado];
+      byRadicado[item.radicado] =
+          local == null ? PqrsEntry.fromRemote(item) : local.copyWith(status: 'synced');
+    }
+    _entries = byRadicado.values.toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
   Future<PqrsEntry> add({
@@ -106,29 +190,75 @@ class PqrsStore extends ChangeNotifier {
     int rating = 0,
   }) async {
     if (!_loaded) await load();
-    final now = DateTime.now();
+
+    final token = await SessionStore.validToken();
+    if (token == null) {
+      throw AuthException(tr('session_expired'), 401);
+    }
+
+    var radicado = _nextRadicado();
+    try {
+      await _service.submit(
+        token,
+        radicado: radicado,
+        type: type,
+        name: name,
+        email: email,
+        subject: subject,
+        message: message,
+        rating: rating,
+      );
+    } on AuthException catch (e) {
+      // El radicado es generado por el cliente: si ya existe, se reintenta una
+      // vez con uno nuevo.
+      if (e.statusCode != 409) rethrow;
+      radicado = _nextRadicado();
+      await _service.submit(
+        token,
+        radicado: radicado,
+        type: type,
+        name: name,
+        email: email,
+        subject: subject,
+        message: message,
+        rating: rating,
+      );
+    }
+
     final entry = PqrsEntry(
-      radicado: _nextRadicado(now),
+      radicado: radicado,
       type: type,
       name: name,
       email: email,
       subject: subject,
       message: message,
       rating: rating,
-      createdAt: now,
+      createdAt: DateTime.now(),
+      status: 'synced',
     );
-    _entries = [entry, ..._entries];
+    _entries = [
+      entry,
+      ..._entries.where((e) => e.radicado != entry.radicado),
+    ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     await _persist();
     notifyListeners();
     return entry;
   }
 
-  String _nextRadicado(DateTime now) {
+  /// Formato `PQRS-AAAAMMDD-HHMMSSmmmNNN`, válido para el backend (letras,
+  /// números y guiones) y único incluso si se radican dos seguidas.
+  String _nextRadicado() {
+    final now = DateTime.now();
     final y = now.year.toString().padLeft(4, '0');
     final m = now.month.toString().padLeft(2, '0');
     final d = now.day.toString().padLeft(2, '0');
-    final seq = (_entries.length + 1).toString().padLeft(4, '0');
-    return 'PQRS-$y$m$d-$seq';
+    final hh = now.hour.toString().padLeft(2, '0');
+    final mm = now.minute.toString().padLeft(2, '0');
+    final ss = now.second.toString().padLeft(2, '0');
+    final ms = now.millisecond.toString().padLeft(3, '0');
+    _sequence = (_sequence + 1) % 1000;
+    final seq = _sequence.toString().padLeft(3, '0');
+    return 'PQRS-$y$m$d-$hh$mm$ss$ms$seq';
   }
 
   Future<void> _persist() async {

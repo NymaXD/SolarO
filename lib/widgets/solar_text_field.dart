@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/lang.dart';
 
@@ -13,6 +14,7 @@ class SolarTextField extends StatefulWidget {
   final TextInputType keyboardType;
   final TextInputAction textInputAction;
   final int maxLines;
+  final int? maxLength;
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
   final void Function(String)? onSubmitted;
@@ -28,6 +30,7 @@ class SolarTextField extends StatefulWidget {
     this.keyboardType = TextInputType.text,
     this.textInputAction = TextInputAction.next,
     this.maxLines = 1,
+    this.maxLength,
     this.validator,
     this.onChanged,
     this.onSubmitted,
@@ -72,6 +75,9 @@ class _SolarTextFieldState extends State<SolarTextField> {
           textInputAction: widget.textInputAction,
           minLines: widget.maxLines > 1 ? 3 : 1,
           maxLines: widget.maxLines,
+          inputFormatters: widget.maxLength == null
+              ? null
+              : [LengthLimitingTextInputFormatter(widget.maxLength)],
           autovalidateMode: AutovalidateMode.onUserInteraction,
           validator: widget.validator,
           onChanged: widget.onChanged,

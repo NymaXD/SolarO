@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../services/auth_service.dart';
 import '../../services/pqrs_store.dart';
 import '../../services/session_store.dart';
 import '../../theme/app_colors.dart';
@@ -102,9 +103,24 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         _type = 'petition';
         _stars = 0;
       });
+    } on AuthException catch (e) {
+      if (mounted) _showError(e.message);
+    } catch (_) {
+      if (mounted) _showError(tr('err_generic'));
     } finally {
       if (mounted) setState(() => _sending = false);
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppColors.error,
+        ),
+      );
   }
 
   @override
@@ -205,9 +221,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 label: tr('pqrs_subject'),
                 hint: tr('pqrs_subject_hint'),
                 prefix: Icons.subject_rounded,
+                maxLength: 30,
                 textInputAction: TextInputAction.next,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? tr('v_subject') : null,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return tr('v_subject');
+                  if (v.trim().length > 30) return tr('v_subject_long');
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               SolarTextField(
@@ -216,9 +236,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 hint: tr('comment_hint'),
                 prefix: Icons.message_outlined,
                 maxLines: 4,
+                maxLength: 1000,
                 textInputAction: TextInputAction.newline,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? tr('v_comment') : null,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return tr('v_comment');
+                  if (v.trim().length > 1000) return tr('v_comment_long');
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               Text(tr('pqrs_rating_optional'),
@@ -257,11 +281,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   border: Border.all(color: context.border),
                 ),
                 child: Row(children: [
-                  Icon(Icons.cloud_off_outlined,
+                  Icon(Icons.cloud_done_outlined,
                       size: 18, color: context.tMed),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(tr('pqrs_local_note'),
+                    child: Text(tr('pqrs_server_note'),
                         style:
                             TextStyle(fontSize: 11.5, color: context.tMed)),
                   ),
@@ -299,6 +323,18 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                       fontSize: 16,
                       color: context.tDark)),
               const Spacer(),
+              if (store.loaded)
+                IconButton(
+                  tooltip: tr('retry'),
+                  onPressed: store.refreshing ? null : store.refresh,
+                  icon: store.refreshing
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(Icons.refresh_rounded, size: 20, color: primary),
+                ),
               if (store.entries.isNotEmpty)
                 Container(
                   padding:
@@ -315,6 +351,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 ),
             ]),
             const SizedBox(height: 12),
+            if (store.syncError != null) ...[
+              _syncBanner(store.syncError!),
+              const SizedBox(height: 12),
+            ],
             if (!store.loaded)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
@@ -331,6 +371,29 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _syncBanner(String message) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
+      ),
+      child: Row(children: [
+        const Icon(Icons.cloud_off_outlined,
+            size: 16, color: AppColors.warning),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            '${tr('pqrs_sync_error')} $message',
+            style: TextStyle(fontSize: 11.5, color: context.tDark),
+          ),
+        ),
+      ]),
     );
   }
 
@@ -394,7 +457,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             _chip(_typeLabel(e.type), color),
-            _chip(tr('pqrs_status_submitted'), AppColors.success),
+            _chip(
+              e.status == 'synced'
+                  ? tr('pqrs_status_submitted')
+                  : tr('pqrs_pending_sync'),
+              e.status == 'synced' ? AppColors.success : AppColors.warning,
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -411,10 +479,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           ),
         ],
         const SizedBox(height: 2),
-        Text(e.message,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12.5, color: context.tMed)),
+        if (e.message.isNotEmpty)
+          Text(e.message,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12.5, color: context.tMed)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 12,
@@ -424,8 +493,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             _meta(Icons.confirmation_number_outlined,
                 '${tr('pqrs_radicado')}: ${e.radicado}'),
             _meta(Icons.schedule_rounded, _date(e.createdAt)),
-            if (e.status != 'synced')
-              _meta(Icons.cloud_off_outlined, tr('pqrs_pending_sync')),
           ],
         ),
       ],

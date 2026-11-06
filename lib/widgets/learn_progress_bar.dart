@@ -4,9 +4,9 @@ import '../theme/lang.dart';
 
 /// Barra de progreso del módulo educativo.
 ///
-/// Muestra el porcentaje de lecciones completadas de un nivel.
-/// Está preparada para conectarse al backend: el `completed` llega del
-/// estado local por ahora y después se lee de `GET /learn/progress`.
+/// Muestra el porcentaje de lecciones completadas de un nivel. El `completed`
+/// llega de `GET /learn/progress` y se actualiza al marcar o desmarcar una
+/// lección en el detalle del nivel.
 class LearnProgressBar extends StatelessWidget {
   final double progress; // 0.0 - 1.0
   final int completed;

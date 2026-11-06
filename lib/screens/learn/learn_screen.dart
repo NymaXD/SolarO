@@ -1,49 +1,114 @@
 import 'package:flutter/material.dart';
 
+import '../../services/auth_service.dart';
+import '../../services/learn_service.dart';
+import '../../services/session_store.dart';
+import '../../services/settings_store.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/lang.dart';
 import '../../theme/responsive.dart';
-import '../../widgets/empty_state.dart';
 import '../../widgets/learn_progress_bar.dart';
 import '../../widgets/skeletons.dart';
 import 'learn_level.dart';
 import 'learn_level_screen.dart';
 
 /// Aprende: skeleton de carga + módulos educativos (3 niveles).
+///
+/// El contenido se reconstruye en cada build con [LearnData.levels], así que
+/// cambiar de idioma actualiza títulos y lecturas. El progreso real llega de
+/// `GET /learn/progress` y se refresca al volver de un nivel.
 class LearnScreen extends StatefulWidget {
-  const LearnScreen({super.key});
+  final LearnService? service;
+
+  const LearnScreen({super.key, this.service});
+
   @override
   State<LearnScreen> createState() => _LearnScreenState();
 }
 
 class _LearnScreenState extends State<LearnScreen> {
+  late final LearnService _service;
+
   bool _loading = true;
-  List<LearnLevel> _levels = const [];
+  bool _refreshing = false;
+  String? _error;
+  Map<int, Set<int>> _completed = const {};
 
   @override
   void initState() {
     super.initState();
+    _service = widget.service ?? LearnService();
     _load();
   }
 
-  /// Carga los módulos. Reemplazar por GET /learn/niveles cuando exista el backend.
-  Future<void> _load() async {
-    await Future.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
-    setState(() {
-      _levels = LearnData.levels();
-      _loading = false;
-    });
+  /// Carga el progreso del usuario. Si falla, los niveles se muestran igual
+  /// (sin marcas) y aparece un aviso con opción de reintentar.
+  Future<void> _load({bool showSkeleton = true}) async {
+    if (mounted) {
+      setState(() {
+        if (showSkeleton) _loading = true;
+        _refreshing = !showSkeleton;
+        _error = null;
+      });
+    }
+
+    try {
+      final token = await SessionStore.validToken();
+      if (token == null) {
+        throw AuthException(tr('session_expired'), 401);
+      }
+      final progress = await _service.getProgress(token);
+      if (!mounted) return;
+      setState(() {
+        _completed = {
+          for (final item in progress.values) item.level: item.completed,
+        };
+        _loading = false;
+        _refreshing = false;
+        _error = null;
+      });
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _refreshing = false;
+        _error = e.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _refreshing = false;
+        _error = tr('err_generic');
+      });
+    }
   }
 
-  void _openLevel(LearnLevel level) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => LearnLevelScreen(level: level)),
+  List<LearnLevel> get _levels => LearnData.levels()
+      .map((level) => level.withProgress(_completed[level.number] ?? const {}))
+      .toList();
+
+  Future<void> _openLevel(LearnLevel level) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LearnLevelScreen(level: level, service: _service),
+      ),
     );
+    // Al volver se refresca el progreso: el detalle pudo marcarlo o quitarlo.
+    if (mounted) await _load(showSkeleton: false);
   }
 
   @override
   Widget build(BuildContext context) {
+    // El contenido se reconstruye al cambiar el idioma (los textos viven en
+    // LearnData y no en el estado).
+    return ListenableBuilder(
+      listenable: SettingsStore.instance,
+      builder: (context, _) => _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     final isDesktop = Responsive.isDesktop(context);
     if (!isDesktop) return _mobile(context);
 
@@ -56,17 +121,18 @@ class _LearnScreenState extends State<LearnScreen> {
                 fontWeight: FontWeight.w900,
                 color: context.tDark)),
         const SizedBox(height: 4),
-        Text(tr('learn_sub'),
-            style: TextStyle(color: context.tMed)),
+        Text(tr('learn_sub'), style: TextStyle(color: context.tMed)),
         const SizedBox(height: 16),
+        if (_refreshing) ...[
+          const LinearProgressIndicator(minHeight: 2),
+          const SizedBox(height: 8),
+        ],
+        if (_error != null) ...[
+          _errorBanner(),
+          const SizedBox(height: 12),
+        ],
         if (_loading)
           const LearnListSkeleton()
-        else if (_levels.isEmpty)
-          EmptyState(
-            icon: Icons.school_outlined,
-            title: tr('no_modules'),
-            subtitle: tr('no_modules_sub'),
-          )
         else
           Column(
             children: [
@@ -107,14 +173,16 @@ class _LearnScreenState extends State<LearnScreen> {
                     style: TextStyle(color: context.tMed, fontSize: 12.5)),
               ),
               const SizedBox(height: 14),
+              if (_refreshing) ...[
+                const LinearProgressIndicator(minHeight: 2),
+                const SizedBox(height: 8),
+              ],
+              if (_error != null) ...[
+                _errorBanner(),
+                const SizedBox(height: 12),
+              ],
               if (_loading)
                 const LearnListSkeleton()
-              else if (_levels.isEmpty)
-                EmptyState(
-                  icon: Icons.school_outlined,
-                  title: tr('no_modules'),
-                  subtitle: tr('no_modules_sub'),
-                )
               else
                 Column(
                   children: [
@@ -132,6 +200,38 @@ class _LearnScreenState extends State<LearnScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _errorBanner() {
+    final dark = context.isDark;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: dark ? 0.16 : 0.10),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_off_outlined,
+              size: 18, color: AppColors.warning),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _error!,
+              style: TextStyle(fontSize: 12, color: context.tDark),
+            ),
+          ),
+          TextButton(
+            onPressed: _refreshing ? null : () => _load(showSkeleton: false),
+            child: Text(tr('retry'),
+                style: const TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w800)),
+          ),
+        ],
       ),
     );
   }
@@ -219,7 +319,8 @@ class _LevelRow extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 14.5,
-                            color: isDark ? AppColors.textWhite : AppColors.textDark,
+                            color:
+                                isDark ? AppColors.textWhite : AppColors.textDark,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -229,7 +330,9 @@ class _LevelRow extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12,
-                            color: isDark ? AppColors.mutedDark : AppColors.textMedium,
+                            color: isDark
+                                ? AppColors.mutedDark
+                                : AppColors.textMedium,
                           ),
                         ),
                       ],
