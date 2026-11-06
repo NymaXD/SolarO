@@ -258,12 +258,12 @@ def radicar_pqrs(usuario: Usuario, datos: dict) -> dict:
         EnvioFallido: Si el proveedor de correo no pudo entregar el correo.
     """
     d = _validar(datos)
-    _verificar_limite(usuario.id)
+    _verificar_limite(usuario.id_usuario)
 
     db.session.add(
         SolicitudPQRS(
             numero_radicado=d["numero_radicado"],
-            usuario_id=usuario.id,
+            usuario_id=usuario.id_usuario,
             tipo=d["tipo"],
             asunto=d["asunto"],
             descripcion=d["descripcion"],
