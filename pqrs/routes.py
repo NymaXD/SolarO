@@ -32,5 +32,5 @@ def radicar(usuario):
 @pqrs.get("")
 @sesion_requerida
 def listar(usuario):
-    return jsonify(service.listar_pqrs(usuario.id)), 200
+    return jsonify(service.listar_pqrs(usuario.id_usuario)), 200
 
