@@ -8,7 +8,7 @@ class SupportContact {
 }
 
 const supportContacts = [
-  SupportContact('Nirayyu Muñoz', 'nirayyu.munozam@ecci.edu.co'),
-  SupportContact('Juan David Laguna', 'juanda.lagunaba@ecci.edu.co'),
-  SupportContact('Michael Moraro', 'michaelda.moraro@ecci.edu.co'),
+  SupportContact('Niray Muñoz', 'nirayyu.munozam@ecci.edu.co'),
+  SupportContact('Juan Laguna', 'juanda.lagunaba@ecci.edu.co'),
+  SupportContact('Michael Mora', 'michaelda.moraro@ecci.edu.co'),
 ];
