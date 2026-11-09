@@ -104,9 +104,9 @@ El contrato completo de los endpoints está en la carpeta [`docs/`](https://gith
 
 | Integrante | Rol | Módulos |
 |---|---|---|
-| `<Niray Muñoz>` | Backend | Autenticación, usuarios, despliegue de API |
-| `<Juan Laguna>` | Frontend | Electrodomésticos, Simulador, PQRS, Interfaz Flutter |
-| `<Michael Mora>` | Base de Datos | Diseño y Administración de Base de Datos |
+| `Niray Muñoz` | Backend | Autenticación, usuarios, despliegue de API |
+| `Juan Laguna` | Frontend | Electrodomésticos, Simulador, PQRS, Interfaz Flutter |
+| `Michael Mora` | Base de Datos | Diseño y Administración de Base de Datos |
 
 ## 📄 Licencia
 
